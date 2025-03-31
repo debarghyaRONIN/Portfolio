@@ -62,12 +62,12 @@ const Navbar = () => {
     gsap.to(toggleButtonRef.current, {
       rotate: 360,
       scale: 1.2,
-      duration: 0.4,
+      duration: 0.1,
       ease: "power2.inOut",
       onComplete: () => {
         gsap.to(toggleButtonRef.current, {
           scale: 1,
-          duration: 0.2
+          duration: 0.0
         });
         // Actually change the theme after animation
         const newMode = !isDarkMode;
@@ -130,7 +130,7 @@ const Navbar = () => {
       variants={slideInFromTop}
       initial="hidden"
       animate="visible"
-      className={`fixed w-full z-50 transition-all duration-300 ${
+      className={`fixed w-full z-50 transition-colors duration-300 ${
         scrolled ? "bg-[#0f0f0f]/95 backdrop-blur-md shadow-lg" : "bg-transparent"
       } ${isDarkMode ? '' : 'light-mode'}`}
     >
@@ -152,7 +152,7 @@ const Navbar = () => {
                 isDarkMode 
                   ? "from-red-600 to-yellow-500 hover:from-yellow-500 hover:to-red-600" 
                   : "from-blue-600 to-blue-400 hover:from-blue-400 hover:to-blue-600"
-              } transition-all duration-300`}
+              } transition-colors duration-100`}
             >
               <span className="mr-2 text-3xl font-extrabold">DS</span>
             </a>
@@ -205,8 +205,8 @@ const Navbar = () => {
         initial={false}
         animate={isOpen ? "open" : "closed"}
         variants={{
-          open: { opacity: 1, height: "auto" },
-          closed: { opacity: 0, height: 0 },
+          open: { opacity: 1, height: "auto", transition: { duration: 0.2 } },
+          closed: { opacity: 0, height: 0, transition: { duration: 0.1 } },
         }}
         className={`${isDarkMode ? 'bg-[#0f0f0f]/95' : 'bg-gray-50/95'} backdrop-blur-md overflow-hidden`}
       >
@@ -223,7 +223,7 @@ const Navbar = () => {
                   : (isDarkMode 
                     ? 'text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-red-600/20 hover:to-yellow-500/20' 
                     : 'text-gray-700 hover:text-black hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-blue-300/20')
-              } block px-3 py-2 rounded-md text-base font-medium transition-all duration-300 transform hover:scale-[1.02] w-full`}
+              } block px-3 py-2 rounded-md text-base font-medium transition-colors duration-100 hover:scale-[1.02] w-full`}
               onClick={(e) => handleNavClick(e, item.id)}
             >
               {item.name}

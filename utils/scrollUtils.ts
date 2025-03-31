@@ -4,7 +4,7 @@
  * @param offset Optional offset from the top of the element (in pixels)
  * @param duration Duration of the scroll animation in milliseconds
  */
-export const smoothScrollToId = (id: string, offset: number = 0, duration: number = 800): void => {
+export const smoothScrollToId = (id: string, offset: number = 0, duration: number = 300): void => {
   // Find the target element
   const targetElement = document.getElementById(id);
   
@@ -25,11 +25,9 @@ export const smoothScrollToId = (id: string, offset: number = 0, duration: numbe
     const timeElapsed = currentTime - startTime;
     const progress = Math.min(timeElapsed / duration, 1);
     
-    // Easing function - easeInOutCubic
+    // Easing function - easeOutQuad (faster feeling)
     const ease = (t: number): number => {
-      return t < 0.5
-        ? 4 * t * t * t
-        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      return t * (2 - t);
     };
     
     window.scrollTo(0, startPosition + distanceToTravel * ease(progress));
