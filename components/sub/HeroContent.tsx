@@ -26,7 +26,7 @@ const HeroContent = () => {
             Hey!
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-500">
               {" "}
-              I'm Debarghya{" "}
+              I&apos;m Debarghya{" "}
             </span>
           </span>
         </motion.div>

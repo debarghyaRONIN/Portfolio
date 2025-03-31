@@ -71,7 +71,7 @@ const TimelineItem = ({ year, title, description, images, isLeft }: TimelineItem
       >
         <div ref={containerRef} className="relative h-72 md:h-80 w-full rounded-xl border-2 border-[#ff6a0066] shadow-lg overflow-hidden bg-black/60 backdrop-filter backdrop-blur-sm">
           <div className="absolute inset-0 rounded-xl overflow-hidden">
-            <Image 
+            <Image
               key={currentImageIndex} 
               src={images[currentImageIndex]}
               alt={`${title} - image ${currentImageIndex + 1}`}
@@ -83,34 +83,45 @@ const TimelineItem = ({ year, title, description, images, isLeft }: TimelineItem
             />
           </div>
           
-          {/* Image counter */}
-          <div className="absolute bottom-3 right-3 bg-gradient-to-r from-red-600 to-yellow-600 text-white px-3 py-1 rounded-full text-xs z-10 shadow-md">
-            {currentImageIndex + 1} / {images.length}
+          {/* Content overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent rounded-xl p-6 flex flex-col justify-end">
+            <motion.h3 
+              variants={slideInFromLeft(0.5)}
+              className="text-2xl md:text-3xl font-bold text-white mb-2"
+            >
+              {title}
+            </motion.h3>
+            <motion.p 
+              variants={slideInFromLeft(0.7)}
+              className="text-gray-300 text-sm md:text-base"
+            >
+              {description}
+            </motion.p>
           </div>
+          
+          {/* Navigation buttons */}
+          {images.length > 1 && (
+            <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 pointer-events-none">
+              <button 
+                onClick={goToPrevImage}
+                disabled={isAnimating}
+                className="bg-gradient-to-br from-red-600 to-yellow-600 text-white rounded-full p-2 shadow-lg transition-all duration-300 pointer-events-auto focus:outline-none z-10 hover:scale-110 disabled:opacity-50"
+                aria-label="Previous image"
+              >
+                <ChevronLeftIcon className="h-8 w-8" />
+              </button>
+              
+              <button 
+                onClick={goToNextImage}
+                disabled={isAnimating}
+                className="bg-gradient-to-br from-red-600 to-yellow-600 text-white rounded-full p-2 shadow-lg transition-all duration-300 pointer-events-auto focus:outline-none z-10 hover:scale-110 disabled:opacity-50"
+                aria-label="Next image"
+              >
+                <ChevronRightIcon className="h-8 w-8" />
+              </button>
+            </div>
+          )}
         </div>
-        
-        {/* Navigation buttons */}
-        {images.length > 1 && (
-          <div className="absolute inset-y-0 w-full flex items-center justify-between px-4 pointer-events-none">
-            <button 
-              onClick={goToPrevImage}
-              disabled={isAnimating}
-              className="bg-gradient-to-br from-red-600 to-yellow-600 text-white rounded-full p-2 shadow-lg transition-all duration-300 pointer-events-auto focus:outline-none z-10 hover:scale-110 disabled:opacity-50"
-              aria-label="Previous image"
-            >
-              <ChevronLeftIcon className="h-8 w-8" />
-            </button>
-            
-            <button 
-              onClick={goToNextImage}
-              disabled={isAnimating}
-              className="bg-gradient-to-br from-red-600 to-yellow-600 text-white rounded-full p-2 shadow-lg transition-all duration-300 pointer-events-auto focus:outline-none z-10 hover:scale-110 disabled:opacity-50"
-              aria-label="Next image"
-            >
-              <ChevronRightIcon className="h-8 w-8" />
-            </button>
-          </div>
-        )}
       </motion.div>
     </div>
   );
