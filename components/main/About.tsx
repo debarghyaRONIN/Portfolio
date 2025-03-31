@@ -41,13 +41,13 @@ const About = () => {
             </h2>
             <div className="space-y-4 text-gray-300">
               <p className="text-lg leading-relaxed">
-                I am a passionate Machine Learning Engineer and MLOps enthusiast with a strong foundation in AI and data science. My journey in technology has been driven by a deep curiosity for solving complex problems and creating innovative solutions.
+                I&apos;m a passionate Machine Learning Engineer and MLOps enthusiast with a strong foundation in AI and data science. My journey in technology has been driven by a deep curiosity for solving complex problems and creating innovative solutions.
               </p>
               <p className="text-lg leading-relaxed">
                 With expertise in both traditional machine learning and cutting-edge AI technologies, I specialize in building scalable AI-driven solutions that make a real impact. My experience spans from developing rule-based automation systems to implementing state-of-the-art generative AI models.
               </p>
               <p className="text-lg leading-relaxed">
-                When I'm not coding, I'm constantly exploring new technologies and contributing to the AI community. I believe in the power of continuous learning and sharing knowledge to drive innovation forward.
+                When I&apos;m not coding, I&apos;m constantly exploring new technologies and contributing to the AI community. I believe in the power of continuous learning and sharing knowledge to drive innovation forward.
               </p>
             </div>
             

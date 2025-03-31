@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { slideInFromTop } from "@/utils/motion";
-import { Bars3Icon, XMarkIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
-import { Socials } from "@/constants";
-import Image from "next/image";
+import Link from "next/link";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { EnvelopeIcon } from "@heroicons/react/24/outline";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);

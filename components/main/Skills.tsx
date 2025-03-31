@@ -10,7 +10,7 @@ import {
 import React from "react";
 import SkillDataProvider from "../sub/SkillDataProvider";
 import SkillText from "../sub/SkillText";
-import { motion } from "framer-motion";
+import Image from "next/image";
 
 const Skills = () => {
     return (
