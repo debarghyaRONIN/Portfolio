@@ -33,9 +33,9 @@ const HeroContent = () => {
 
         <motion.div
           variants={slideInFromLeft(0.8)}
-          className="text-[15px] text-gray-200 my-5 leading-[30px]"
+          className="text-[15px] text-gray-200 my-5 leading-[30px] max-w-[600px] text-left"
         >
-          I&apos;m a passionate Full Stack Developer with expertise in building modern web applications. I&apos;m currently pursuing my B.Tech in Computer Science and Engineering at the Institute of Engineering and Management, Kolkata.
+          I&apos;m a Data Science & MLOPS Enthusiast<br />with a passion for building<br />AI Driven Applications.
         </motion.div>
         <motion.a
           variants={slideInFromLeft(1)}
