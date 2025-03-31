@@ -31,12 +31,12 @@ const HeroContent = () => {
           </span>
         </motion.div>
 
-        <motion.p
+        <motion.div
           variants={slideInFromLeft(0.8)}
-          className="text-lg text-gray-200 my-5 max-w-[600px]"
+          className="text-[15px] text-gray-200 my-5 leading-[30px]"
         >
-          A Machine Learning Engineer & MLOps Enthusiast passionate about building AI-driven solutions. From rule-based automation to Generative AI, I love solving complex problems with data and code.
-        </motion.p>
+          I&apos;m a passionate Full Stack Developer with expertise in building modern web applications. I&apos;m currently pursuing my B.Tech in Computer Science and Engineering at the Institute of Engineering and Management, Kolkata.
+        </motion.div>
         <motion.a
           variants={slideInFromLeft(1)}
           href="#skills"

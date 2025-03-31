@@ -10,7 +10,6 @@ import {
 import React from "react";
 import SkillDataProvider from "../sub/SkillDataProvider";
 import SkillText from "../sub/SkillText";
-import Image from "next/image";
 
 const Skills = () => {
     return (
