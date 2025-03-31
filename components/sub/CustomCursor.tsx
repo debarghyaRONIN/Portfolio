@@ -94,7 +94,6 @@ const CustomCursor = () => {
       height: isClicking ? 10 : 16,
       width: isClicking ? 10 : 16,
       backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
-      mixBlendMode: isDarkMode ? "difference" : "normal" as any,
       borderRadius: '50%',
       border: isDarkMode ? '2px solid rgba(255, 255, 255, 0.8)' : '2px solid rgba(0, 0, 0, 0.5)'
     },
@@ -104,7 +103,6 @@ const CustomCursor = () => {
       height: 40,
       width: 40,
       backgroundColor: 'transparent',
-      mixBlendMode: isDarkMode ? "difference" : "normal" as any,
       border: isDarkMode 
         ? '2px solid rgba(255, 255, 255, 0.7)' 
         : '2px solid rgba(59, 130, 246, 0.7)',
