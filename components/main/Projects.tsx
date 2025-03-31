@@ -8,9 +8,9 @@ import Image from "next/image";
 const Projects = () => {
   const projects = [
     {
-      title: "Stock Market Prediction using Prophet",
-      description: "A web app that predicts stock prices using Prophet. \n \n Features: \n -Uses Prophet for time series forecasting. \n -Streamlit for creating the web interface. \n -Yahoo Finance for fetching stock data.",
-      image: "/Stock.png",
+      title: "Stock Market Analysis",
+      description: "A comprehensive stock market analysis tool that provides real-time data visualization and predictive analytics.",
+      image: "/Stock.PNG",
       technologies: ["Python", "Streamlit", "Prophet", "Yahoo Finance"],
       link: "https://pdftojso-vnksozoesenyxp8oqj9di5.streamlit.app/"
     },
