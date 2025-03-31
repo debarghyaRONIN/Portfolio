@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Debarghya's Portfolio | ML Engineer & MLOps Enthusiast",
+  title: "Debarghya&apos;s Portfolio | ML Engineer & MLOps Enthusiast",
   description: "Portfolio of Debarghya, a Machine Learning Engineer and MLOps Enthusiast passionate about building AI-driven solutions.",
 };
 
