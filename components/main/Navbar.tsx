@@ -7,18 +7,23 @@ import { Bars3Icon, XMarkIcon, EnvelopeIcon } from "@heroicons/react/24/outline"
 import gsap from "gsap";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 
-// Debounce function to prevent multiple rapid clicks
-const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): ((...args: Parameters<T>) => void) => {
+// Simplified debounce function with proper types
+function debounce<T extends (...args: string[]) => void>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
-  return function executedFunction(...args: Parameters<T>) {
+  
+  return function(...args: Parameters<T>): void {
     const later = () => {
-      clearTimeout(timeout as NodeJS.Timeout);
+      timeout = null;
       func(...args);
     };
+    
     if (timeout) clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
-};
+}
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,6 +32,15 @@ const Navbar = () => {
   const [isScrolling, setIsScrolling] = useState(false);
   const toggleButtonRef = useRef(null);
   const previousScrollPosition = useRef(0);
+
+  const navItems = [
+    { name: "Home", href: "#home" },
+    { name: "About", href: "#about" },
+    { name: "Skills", href: "#skills" },
+    { name: "Experience", href: "#achievements" },
+    { name: "Projects", href: "#projects" },
+    { name: "Contact", href: "#contact" },
+  ];
 
   // Register the ScrollToPlugin
   useEffect(() => {
@@ -70,7 +84,7 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [activeSection, isScrolling]);
+  }, [activeSection, isScrolling, navItems]);
 
   // Theme toggle function
   const toggleTheme = () => {
@@ -128,17 +142,8 @@ const Navbar = () => {
     });
   }, [isDarkMode]);
 
-  const navItems = [
-    { name: "Home", href: "#home" },
-    { name: "About", href: "#about" },
-    { name: "Skills", href: "#skills" },
-    { name: "Experience", href: "#achievements" },
-    { name: "Projects", href: "#projects" },
-    { name: "Contact", href: "#contact" },
-  ];
-
-  // Function to handle smooth scrolling to sections with debouncing
-  const scrollToSection = useCallback(
+  // Create a debounced version of scrollToSection
+  const debouncedScrollToSection = useCallback(
     debounce((sectionId: string) => {
       setIsOpen(false); // Close mobile menu
       const targetSection = document.getElementById(sectionId);
@@ -178,7 +183,7 @@ const Navbar = () => {
               setIsScrolling(false);
             }
           });
-        } catch (error) {
+        } catch {
           // Fallback to native smooth scrolling if GSAP ScrollToPlugin fails
           const yOffset = -70; // navbar height offset
           const y = targetSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
@@ -218,7 +223,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
             <button 
-              onClick={() => scrollToSection("home")}
+              onClick={() => debouncedScrollToSection("home")}
               className={`text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${
                 isDarkMode 
                   ? "from-red-600 to-yellow-500 hover:from-yellow-500 hover:to-red-600" 
@@ -254,7 +259,7 @@ const Navbar = () => {
             {navItems.map((item) => (
               <button
                 key={item.name}
-                onClick={() => scrollToSection(item.href.substring(1))}
+                onClick={() => debouncedScrollToSection(item.href.substring(1))}
                 className={`
                   relative px-3 py-2 rounded-md text-sm font-medium 
                   transform hover:scale-[1.05]
@@ -384,7 +389,7 @@ const Navbar = () => {
           {navItems.map((item) => (
             <motion.button
               key={item.name}
-              onClick={() => scrollToSection(item.href.substring(1))}
+              onClick={() => debouncedScrollToSection(item.href.substring(1))}
               className={`
                 nav-item-${item.href.substring(1)}
                 ${activeSection === item.href.substring(1)
