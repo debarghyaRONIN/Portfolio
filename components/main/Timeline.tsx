@@ -12,12 +12,19 @@ interface TimelineItemProps {
   description: string;
   images: string[];
   isLeft: boolean;
+  isDarkMode: boolean;
 }
 
-const TimelineItem = ({ year, title, description, images, isLeft }: TimelineItemProps) => {
+const TimelineItem = ({ year, title, description, images, isLeft, isDarkMode }: TimelineItemProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Function to determine if current image is portrait
+  const isPortraitImage = () => {
+    // Check if the current image is the portrait one
+    return images[currentImageIndex] === "/Sih2024me_with_trophy.jpeg";
+  };
 
   const goToPrevImage = () => {
     if (isAnimating) return;
@@ -36,6 +43,36 @@ const TimelineItem = ({ year, title, description, images, isLeft }: TimelineItem
     return () => clearTimeout(timer);
   }, [currentImageIndex]);
 
+  // Dynamic classes based on theme
+  const cardBgClass = isDarkMode 
+    ? "bg-[#1C1C1C]/60" 
+    : "bg-white/80";
+  
+  const cardBorderClass = isDarkMode 
+    ? "border-[#ff6a0066]" 
+    : "border-blue-400/40";
+  
+  const headingGradient = isDarkMode 
+    ? "from-red-600 to-yellow-500" 
+    : "from-blue-600 to-blue-400";
+  
+  // For the title, use white text in both modes
+  const titleClass = "text-white";
+    
+  const descriptionClass = isDarkMode ? "text-gray-300" : "text-gray-700";
+  
+  const timelineGradient = isDarkMode
+    ? "from-red-600 via-orange-500 to-yellow-500"
+    : "from-blue-600 via-blue-500 to-blue-400";
+  
+  const reverseTimelineGradient = isDarkMode
+    ? "from-yellow-500 via-orange-500 to-red-600"
+    : "from-blue-400 via-blue-500 to-blue-600";
+  
+  const dotGradient = isDarkMode
+    ? "from-red-600 via-orange-500 to-yellow-500 shadow-orange-500/30"
+    : "from-blue-600 via-blue-500 to-blue-400 shadow-blue-500/30";
+
   return (
     <div className={`flex flex-col md:flex-row w-full items-center justify-center my-8 ${isLeft ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
       {/* Content side */}
@@ -43,25 +80,25 @@ const TimelineItem = ({ year, title, description, images, isLeft }: TimelineItem
         variants={isLeft ? slideInFromLeft(0.5) : slideInFromRight(0.5)}
         className="w-full md:w-1/2 p-4"
       >
-        <div className="bg-black/60 p-6 rounded-lg border border-[#ff6a0066] shadow-lg backdrop-filter backdrop-blur-sm">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-500 font-bold">
+        <div className={`${cardBgClass} p-6 rounded-lg border ${cardBorderClass} shadow-lg backdrop-filter backdrop-blur-sm transition-colors duration-500`}>
+          <span className={`text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} font-bold transition-colors duration-500`}>
             {year}
           </span>
-          <h3 className="text-xl font-bold text-white mt-2">{title}</h3>
-          <p className="text-gray-300 mt-2">{description}</p>
+          <h3 className={`text-xl font-bold ${titleClass} mt-2 transition-colors duration-500`}>{title}</h3>
+          <p className={`${descriptionClass} mt-2 transition-colors duration-500`}>{description}</p>
         </div>
       </motion.div>
       
       {/* Center wire - hidden on mobile, shown on md and larger */}
       <div className="hidden md:flex mx-4 h-full flex-col items-center">
-        <div className="w-1 bg-gradient-to-b from-red-600 via-orange-500 to-yellow-500 h-full flex-grow"></div>
-        <div className="w-6 h-6 rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 my-2 shadow-lg shadow-orange-500/30"></div>
-        <div className="w-1 bg-gradient-to-b from-yellow-500 via-orange-500 to-red-600 h-full flex-grow"></div>
+        <div className={`w-1 bg-gradient-to-b ${timelineGradient} h-full flex-grow transition-colors duration-500`}></div>
+        <div className={`w-6 h-6 rounded-full bg-gradient-to-r ${dotGradient} my-2 shadow-lg transition-colors duration-500`}></div>
+        <div className={`w-1 bg-gradient-to-b ${reverseTimelineGradient} h-full flex-grow transition-colors duration-500`}></div>
       </div>
       
       {/* Mobile timeline connector - only shown on mobile */}
       <div className="md:hidden flex h-12 w-full items-center justify-center">
-        <div className="h-full w-1 bg-gradient-to-b from-red-600 via-orange-500 to-yellow-500"></div>
+        <div className={`h-full w-1 bg-gradient-to-b ${timelineGradient} transition-colors duration-500`}></div>
       </div>
       
       {/* Image side with navigation buttons */}
@@ -69,14 +106,14 @@ const TimelineItem = ({ year, title, description, images, isLeft }: TimelineItem
         variants={isLeft ? slideInFromRight(0.5) : slideInFromLeft(0.5)}
         className="w-full md:w-1/2 p-4 relative"
       >
-        <div ref={containerRef} className="relative h-72 md:h-80 w-full rounded-xl border-2 border-[#ff6a0066] shadow-lg overflow-hidden bg-black/60 backdrop-filter backdrop-blur-sm">
+        <div ref={containerRef} className={`relative h-72 md:h-80 w-full rounded-xl border-2 ${cardBorderClass} shadow-lg overflow-hidden ${cardBgClass} backdrop-filter backdrop-blur-sm transition-colors duration-500`}>
           <div className="absolute inset-0 rounded-xl overflow-hidden">
             <Image
               key={currentImageIndex} 
               src={images[currentImageIndex]}
               alt={`${title} - image ${currentImageIndex + 1}`}
               fill
-              style={{ objectFit: 'cover' }}
+              style={{ objectFit: isPortraitImage() ? 'contain' : 'cover', backgroundColor: isPortraitImage() ? 'rgba(0,0,0,0.8)' : 'transparent' }}
               className="timeline-image"
               sizes="(max-width: 768px) 100vw, 50vw"
               priority
@@ -112,6 +149,40 @@ const TimelineItem = ({ year, title, description, images, isLeft }: TimelineItem
 };
 
 const Timeline = () => {
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // Listen for theme changes
+  useEffect(() => {
+    const checkTheme = () => {
+      setIsDarkMode(!document.documentElement.classList.contains('light-mode'));
+    };
+    
+    // Initial check
+    checkTheme();
+    
+    // Set up mutation observer to watch for class changes on documentElement
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          checkTheme();
+        }
+      });
+    });
+    
+    observer.observe(document.documentElement, { attributes: true });
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // Dynamic classes based on theme
+  const headingGradient = isDarkMode 
+    ? "from-red-600 to-yellow-500" 
+    : "from-blue-600 to-blue-400";
+  
+  const overlayClass = isDarkMode 
+    ? "bg-black/50" 
+    : "bg-black/30";
+
   const timelineData = [
     {
       year: "2024",
@@ -141,7 +212,7 @@ const Timeline = () => {
         >
           <source src="/Waterfall.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-black/50"></div>
+        <div className={`absolute inset-0 ${overlayClass} transition-colors duration-500`}></div>
       </div>
 
       {/* Content */}
@@ -151,13 +222,13 @@ const Timeline = () => {
           animate="visible"
           className="flex flex-col gap-10"
         >
-          <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-500 text-center">
+          <h2 className={`text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} text-center transition-colors duration-500`}>
             Achievements
           </h2>
           
           <div className="space-y-8">
             {timelineData.map((item, index) => (
-              <TimelineItem key={index} {...item} />
+              <TimelineItem key={index} {...item} isDarkMode={isDarkMode} />
             ))}
           </div>
         </motion.div>

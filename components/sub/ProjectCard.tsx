@@ -17,7 +17,7 @@ const ProjectCard: React.FC<Props> = ({ title, description, image, link }) => {
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      className="w-full max-w-sm bg-black/50 border border-[#7042f88b] rounded-lg shadow overflow-hidden"
+      className="w-full max-w-sm bg-[#1C1C1C]/50 border border-[#7042f88b] rounded-lg shadow overflow-hidden"
     >
       <div className="relative h-48 w-full">
         <Image

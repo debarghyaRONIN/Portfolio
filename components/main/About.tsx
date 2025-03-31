@@ -1,14 +1,65 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { slideInFromLeft, slideInFromRight } from "@/utils/motion";
 import Image from "next/image";
 import { EnvelopeIcon } from "@heroicons/react/24/outline";
 
 const About = () => {
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // Listen for theme changes from the navbar
+  useEffect(() => {
+    const checkTheme = () => {
+      setIsDarkMode(!document.documentElement.classList.contains('light-mode'));
+    };
+    
+    // Initial check
+    checkTheme();
+    
+    // Set up mutation observer to watch for class changes on documentElement
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          checkTheme();
+        }
+      });
+    });
+    
+    observer.observe(document.documentElement, { attributes: true });
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // Dynamic classes based on theme
+  const textClasses = isDarkMode ? "text-gray-300" : "text-gray-700";
+  const headingGradient = isDarkMode 
+    ? "from-red-600 to-yellow-500" 
+    : "from-blue-600 to-blue-400";
+  
+  const primaryButtonGradient = isDarkMode
+    ? "from-red-600 to-yellow-500 hover:from-yellow-500 hover:to-red-600"
+    : "from-blue-600 to-blue-400 hover:from-blue-400 hover:to-blue-600";
+  
+  const secondaryButtonClasses = isDarkMode
+    ? "border-red-600 text-red-400 hover:bg-red-600/10"
+    : "border-blue-600 text-blue-500 hover:bg-blue-600/10";
+  
+  const accentButtonGradient = isDarkMode
+    ? "from-orange-500 to-yellow-500 hover:from-yellow-500 hover:to-orange-500"
+    : "from-blue-500 to-blue-300 hover:from-blue-300 hover:to-blue-500";
+  
+  const socialIconClasses = isDarkMode
+    ? "text-gray-400 hover:text-white"
+    : "text-gray-500 hover:text-blue-600";
+  
+  const overlayGradient = isDarkMode
+    ? "bg-gradient-to-t from-black/50 to-transparent"
+    : "bg-gradient-to-t from-black/40 to-transparent";
+
   return (
-    <div className="relative flex flex-col h-full w-full" id="about">
+    <div className={`relative flex flex-col h-full w-full transition-colors duration-500 ${isDarkMode ? 'bg-[#0A0A0A]' : 'bg-gray-100'}`} id="about">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <motion.div
           initial="hidden"
@@ -20,7 +71,7 @@ const About = () => {
             variants={slideInFromLeft(0.5)}
             className="w-full md:w-1/2 flex justify-center"
           >
-            <div className="relative w-[300px] h-[450px] rounded-xl overflow-hidden shadow-2xl">
+            <div className="relative w-[300px] h-[450px] rounded-xl overflow-hidden shadow-2xl transition-all duration-500">
               <Image
                 src="/DebarghyaProfile.jpg"
                 alt="Debarghya"
@@ -28,7 +79,7 @@ const About = () => {
                 className="object-cover"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+              <div className={`absolute inset-0 ${overlayGradient}`}></div>
             </div>
           </motion.div>
 
@@ -37,15 +88,15 @@ const About = () => {
             variants={slideInFromRight(0.5)}
             className="w-full md:w-1/2 space-y-6"
           >
-            <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-500">
+            <h2 className={`text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} transition-colors duration-500`}>
               About Me
             </h2>
-            <div className="space-y-4 text-gray-300">
+            <div className={`space-y-4 ${textClasses} transition-colors duration-500`}>
               <p className="text-lg leading-relaxed">
-                I&apos;m a passionate Machine Learning Engineer and MLOps enthusiast with a strong foundation in AI and data science. My journey in technology has been driven by a deep curiosity for solving complex problems and creating innovative solutions.
+              A Machine Learning Engineer & MLOps Developer with a strong background in Python, AI model development, and data engineering.
               </p>
               <p className="text-lg leading-relaxed">
-                With expertise in both traditional machine learning and cutting-edge AI technologies, I specialize in building scalable AI-driven solutions that make a real impact. My experience spans from developing rule-based automation systems to implementing state-of-the-art generative AI models.
+              I have experience working with machine learning frameworks, MLOps pipelines, and AI-driven applications. My projects involve building intelligent systems, optimizing workflows, and deploying scalable solutions. I also have a solid understanding of computer networks, backend development, and software architecture.
               </p>
               <p className="text-lg leading-relaxed">
                 When I&apos;m not coding, I&apos;m constantly exploring new technologies and contributing to the AI community. I believe in the power of continuous learning and sharing knowledge to drive innovation forward.
@@ -55,13 +106,13 @@ const About = () => {
             <div className="flex flex-wrap gap-4">
               <a
                 href="#skills"
-                className="px-6 py-3 bg-gradient-to-r from-red-600 to-yellow-500 text-white rounded-lg font-medium hover:from-yellow-500 hover:to-red-600 transition-all duration-300 transform hover:scale-105"
+                className={`px-6 py-3 bg-gradient-to-r ${primaryButtonGradient} text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105`}
               >
                 View Skills
               </a>
               <a
                 href="#projects"
-                className="px-6 py-3 border border-red-600 text-red-400 rounded-lg font-medium hover:bg-red-600/10 transition-all duration-300 transform hover:scale-105"
+                className={`px-6 py-3 border ${secondaryButtonClasses} rounded-lg font-medium transition-all duration-300 transform hover:scale-105`}
               >
                 View Projects
               </a>
@@ -69,7 +120,7 @@ const About = () => {
                 href="/Debarghya_Resume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-lg font-medium hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 transform hover:scale-105"
+                className={`px-6 py-3 bg-gradient-to-r ${accentButtonGradient} text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105`}
               >
                 Resume
               </a>
@@ -81,7 +132,7 @@ const About = () => {
                 href="https://www.linkedin.com/in/debarghya-saha-99baa624a/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors duration-300"
+                className={`${socialIconClasses} transition-colors duration-300`}
               >
                 <svg
                   className="w-6 h-6"
@@ -96,7 +147,7 @@ const About = () => {
                 href="https://mail.google.com/mail/?view=cm&fs=1&to=debarghyasren@gmail.com&su=Portfolio%20Inquiry&body=Hello%20Debarghya%2C"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors duration-300"
+                className={`${socialIconClasses} transition-colors duration-300`}
               >
                 <EnvelopeIcon className="w-6 h-6" aria-hidden="true" />
               </a>

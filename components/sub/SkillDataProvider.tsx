@@ -10,9 +10,10 @@ interface Props {
     width: number;
     height: number;
     index: number;
+    isDarkMode?: boolean;
 }
 
-const SkillDataProvider = ({ src, width, height, index} : Props) => {
+const SkillDataProvider = ({ src, width, height, index, isDarkMode = true} : Props) => {
     const {ref, inView} = useInView({
         triggerOnce: true
     })
@@ -23,23 +24,30 @@ const SkillDataProvider = ({ src, width, height, index} : Props) => {
     }
 
     const animationDelay = 0.3
-  return (
-  <motion.div
-  ref={ref}
-  initial="hidden"
-  variants={imageVariants}
-  animate={inView ? "visible" : "hidden"}
-  custom={index}
-  transition={{delay: index * animationDelay}}
-  >
-    <Image
-src={src}
-width={width}
-height={height}
-alt='skill image'
-    />
-  </motion.div>
-  )
+    
+    const wrapperClasses = isDarkMode 
+        ? "" 
+        : "filter brightness-[0.85] contrast-[1.2]";
+    
+    return (
+        <motion.div
+            ref={ref}
+            initial="hidden"
+            variants={imageVariants}
+            animate={inView ? "visible" : "hidden"}
+            custom={index}
+            transition={{delay: index * animationDelay}}
+            className={`${wrapperClasses} transition-all duration-500`}
+        >
+            <Image
+                src={src}
+                width={width}
+                height={height}
+                alt='skill image'
+                className="transition-transform duration-300 hover:scale-110"
+            />
+        </motion.div>
+    )
 }
 
 export default SkillDataProvider
