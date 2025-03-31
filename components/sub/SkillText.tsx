@@ -27,7 +27,7 @@ const SkillText = ({ isDarkMode = true }: SkillTextProps) => {
         variants={slideInFromRight(0.5)}
         className={`${textClasses} text-center text-xl max-w-3xl transition-colors duration-500`}
       >
-        I've worked with a range of technologies in the machine learning and web development world.
+        I&apos;ve worked with a range of technologies in the machine learning and web development world.
         From backend rule-based implementations to generative artificial intelligence.
       </motion.div>
     </div>

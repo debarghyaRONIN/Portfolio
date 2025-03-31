@@ -1,29 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { slideInFromTop } from "@/utils/motion";
 import { Bars3Icon, XMarkIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import gsap from "gsap";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
-
-// Simplified debounce function with proper types
-function debounce<T extends (...args: string[]) => void>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
-  
-  return function(...args: Parameters<T>): void {
-    const later = () => {
-      timeout = null;
-      func(...args);
-    };
-    
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,14 +15,14 @@ const Navbar = () => {
   const toggleButtonRef = useRef(null);
   const previousScrollPosition = useRef(0);
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { name: "Home", href: "#home" },
     { name: "About", href: "#about" },
     { name: "Skills", href: "#skills" },
     { name: "Experience", href: "#achievements" },
     { name: "Projects", href: "#projects" },
     { name: "Contact", href: "#contact" },
-  ];
+  ], []);
 
   // Register the ScrollToPlugin
   useEffect(() => {
@@ -143,63 +125,60 @@ const Navbar = () => {
   }, [isDarkMode]);
 
   // Create a debounced version of scrollToSection
-  const debouncedScrollToSection = useCallback(
-    debounce((sectionId: string) => {
-      setIsOpen(false); // Close mobile menu
-      const targetSection = document.getElementById(sectionId);
+  const debouncedScrollToSection = useCallback((sectionId: string) => {
+    setIsOpen(false); // Close mobile menu
+    const targetSection = document.getElementById(sectionId);
+    
+    if (targetSection) {
+      // Store the current scroll position before scrolling
+      previousScrollPosition.current = window.scrollY;
       
-      if (targetSection) {
-        // Store the current scroll position before scrolling
-        previousScrollPosition.current = window.scrollY;
+      // Set scrolling state to prevent active section updates during animation
+      setIsScrolling(true);
+      
+      try {
+        // Update active menu item immediately for better UX
+        setActiveSection(sectionId);
         
-        // Set scrolling state to prevent active section updates during animation
-        setIsScrolling(true);
+        // Don't animate the old button, only set the new one
+        gsap.set(`.nav-item-${activeSection}`, {
+          scale: 1,
+          fontWeight: "normal"
+        });
         
-        try {
-          // Update active menu item immediately for better UX
-          setActiveSection(sectionId);
-          
-          // Don't animate the old button, only set the new one
-          gsap.set(`.nav-item-${activeSection}`, {
-            scale: 1,
-            fontWeight: "normal"
-          });
-          
-          gsap.set(`.nav-item-${sectionId}`, {
-            scale: 1.05,
-            fontWeight: "bold"
-          });
-          
-          // Use GSAP for smooth scrolling animation if available
-          gsap.to(window, {
-            duration: 0.2, 
-            scrollTo: {
-              y: targetSection,
-              offsetY: 70, // Account for navbar height
-              autoKill: false,
-            },
-            ease: "none",
-            onComplete: () => {
-              setIsScrolling(false);
-            }
-          });
-        } catch {
-          // Fallback to native smooth scrolling if GSAP ScrollToPlugin fails
-          const yOffset = -70; // navbar height offset
-          const y = targetSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-          
-          // Use instant scroll
-          window.scrollTo({
-            top: y,
-            behavior: 'auto'
-          });
-          
-          setIsScrolling(false);
-        }
+        gsap.set(`.nav-item-${sectionId}`, {
+          scale: 1.05,
+          fontWeight: "bold"
+        });
+        
+        // Use GSAP for smooth scrolling animation if available
+        gsap.to(window, {
+          duration: 0.2, 
+          scrollTo: {
+            y: targetSection,
+            offsetY: 70, // Account for navbar height
+            autoKill: false,
+          },
+          ease: "none",
+          onComplete: () => {
+            setIsScrolling(false);
+          }
+        });
+      } catch {
+        // Fallback to native smooth scrolling if GSAP ScrollToPlugin fails
+        const yOffset = -70; // navbar height offset
+        const y = targetSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        
+        // Use instant scroll
+        window.scrollTo({
+          top: y,
+          behavior: 'auto'
+        });
+        
+        setIsScrolling(false);
       }
-    }, 0),
-    [activeSection]
-  );
+    }
+  }, [activeSection, setIsScrolling, setActiveSection]);
 
   // Email address for contact
   const emailAddress = "debarghyasren@gmail.com";
