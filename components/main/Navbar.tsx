@@ -5,16 +5,33 @@ import { motion } from "framer-motion";
 import { slideInFromTop } from "@/utils/motion";
 import { Bars3Icon, XMarkIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import { gsap } from "gsap";
+import { smoothScrollToId, updateActiveNavItem } from "@/utils/scrollUtils";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeSection, setActiveSection] = useState('home');
   const toggleButtonRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
+      
+      // Calculate scroll progress
+      const totalHeight = document.body.scrollHeight - window.innerHeight;
+      const progress = (window.scrollY / totalHeight) * 100;
+      setScrollProgress(progress);
+      
+      // Update active section
+      const currentActive = updateActiveNavItem([
+        'home', 'about', 'skills', 'achievements', 'projects', 'contact'
+      ]);
+      
+      if (currentActive && currentActive !== activeSection) {
+        setActiveSection(currentActive);
+      }
     };
     window.addEventListener("scroll", handleScroll);
 
@@ -38,7 +55,7 @@ const Navbar = () => {
     }
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [activeSection]);
 
   // Animate theme toggle and update document with theme class
   const toggleTheme = () => {
@@ -87,12 +104,12 @@ const Navbar = () => {
   }, []);
 
   const navItems = [
-    { name: "Home", href: "#home" },
-    { name: "About", href: "#about" },
-    { name: "Skills", href: "#skills" },
-    { name: "Experience", href: "#achievements" },
-    { name: "Projects", href: "#projects" },
-    { name: "Contact", href: "#contact" },
+    { name: "Home", href: "#home", id: "home" },
+    { name: "About", href: "#about", id: "about" },
+    { name: "Skills", href: "#skills", id: "skills" },
+    { name: "Achievements", href: "#achievements", id: "achievements" },
+    { name: "Projects", href: "#projects", id: "projects" },
+    { name: "Contact", href: "#contact", id: "contact" },
   ];
 
   // Email address for contact
@@ -100,6 +117,13 @@ const Navbar = () => {
   const emailSubject = "Portfolio Contact";
   const emailBody = "Hello Debarghya,";
   const mailtoLink = `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+
+  // Handle smooth scrolling for nav items
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    setIsOpen(false); // Close mobile menu
+    smoothScrollToId(id, 80); // Scroll with offset for navbar
+  };
 
   return (
     <motion.div
@@ -110,11 +134,20 @@ const Navbar = () => {
         scrolled ? "bg-[#0f0f0f]/95 backdrop-blur-md shadow-lg" : "bg-transparent"
       } ${isDarkMode ? '' : 'light-mode'}`}
     >
+      {/* Scroll Progress Bar */}
+      <div className="w-full h-[2px] bg-gray-800/30">
+        <div 
+          className={`h-full ${isDarkMode ? 'bg-gradient-to-r from-red-600 to-yellow-500' : 'bg-gradient-to-r from-blue-600 to-blue-400'}`}
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
             <a 
               href="#home" 
+              onClick={(e) => handleNavClick(e, 'home')}
               className={`text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${
                 isDarkMode 
                   ? "from-red-600 to-yellow-500 hover:from-yellow-500 hover:to-red-600" 
@@ -182,11 +215,16 @@ const Navbar = () => {
             <a
               key={item.name}
               href={item.href}
-              className={`${isDarkMode 
-                ? 'text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-red-600/20 hover:to-yellow-500/20' 
-                : 'text-gray-700 hover:text-black hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-blue-300/20'
+              className={`${
+                activeSection === item.id
+                  ? (isDarkMode 
+                    ? 'bg-gradient-to-r from-red-600/20 to-yellow-500/20 text-white border-l-2 border-red-600' 
+                    : 'bg-gradient-to-r from-blue-500/20 to-blue-300/20 text-black border-l-2 border-blue-600')
+                  : (isDarkMode 
+                    ? 'text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-red-600/20 hover:to-yellow-500/20' 
+                    : 'text-gray-700 hover:text-black hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-blue-300/20')
               } block px-3 py-2 rounded-md text-base font-medium transition-all duration-300 transform hover:scale-[1.02] w-full`}
-              onClick={() => setIsOpen(false)}
+              onClick={(e) => handleNavClick(e, item.id)}
             >
               {item.name}
             </a>

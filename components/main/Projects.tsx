@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
+import ProjectCard from "../sub/ProjectCard";
 
 const Projects = () => {
   const projectsRef = useRef(null);
@@ -315,57 +316,36 @@ const Projects = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+          {/* Project grid with enhanced layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mt-12">
             {projects.map((project, index) => (
-              <div
-                key={project.title}
+              <div 
+                key={index}
                 ref={(el) => setProjectRefs(el, index)}
-                className={`backdrop-blur-sm rounded-xl overflow-hidden border shadow-xl card-hover transition-all duration-500 ${cardBgClasses} ${cardHoverClasses} animate-card-shine`}
-                style={{ backgroundSize: '200% 200%' }}
+                className="relative"
               >
-                {project.image && (
-                  <div className="relative h-48 sm:h-60 w-full overflow-hidden">
-                    <div ref={(el) => setImageFadeRef(el, index)} className="w-full h-full">
-                      <Image
-                        src={project.image}
-                        alt={project.title}
-                        fill
-                        className="object-cover transform hover:scale-110 transition-transform duration-700"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        priority={index < 2}
-                      />
-                    </div>
-                    <div className={`absolute inset-0 transition-colors duration-500 ${cardOverlayClasses}`}></div>
-                    <h3 className={`absolute bottom-3 md:bottom-4 left-4 md:left-6 text-xl md:text-2xl font-bold transition-colors duration-500 ${cardTitleClasses}`}>{project.title}</h3>
-                  </div>
-                )}
-                
-                <div className="p-4 md:p-6">
-                  <p className={`whitespace-pre-line mb-4 md:mb-6 text-xs md:text-sm transition-colors duration-500 ${textClasses}`}>{project.description}</p>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
-                    {project.technologies.map((tech, techIndex) => (
-                      <span
-                        key={tech}
-                        ref={(el) => setTechBadgeRef(el, index, techIndex)}
-                        className={`px-2 py-1 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium transition-colors duration-500 ${techBadgeClasses} hover:scale-110 hover:shadow-lg transition-transform`}
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                  
-                  <a
-                    href={project.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-300 transform hover:scale-105 ${buttonClasses} hover:shadow-lg`}
-                  >
-                    View Project
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4 ml-2 animate-pulse-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
+                <div ref={(el) => setImageFadeRef(el, index)}>
+                  <ProjectCard
+                    title={project.title}
+                    description={project.description}
+                    src={project.image}
+                    link={project.link}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2 mt-4 justify-center">
+                  {project.technologies.map((tech, techIndex) => (
+                    <span
+                      key={techIndex}
+                      ref={(el) => setTechBadgeRef(el, index, techIndex)}
+                      className={`px-3 py-1 text-xs rounded-full ${
+                        isDarkMode 
+                          ? 'bg-[#232323] text-gray-300 border border-[#333]' 
+                          : 'bg-gray-100 text-gray-700 border border-gray-200'
+                      }`}
+                    >
+                      {tech}
+                    </span>
+                  ))}
                 </div>
               </div>
             ))}
