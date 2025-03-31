@@ -118,7 +118,7 @@ export const ML_AI_Skills: Skill[] = [
     height: 70,
   },
   {
-    Image: "/Hugging Face.png",
+    Image: "/HuggingFace.png",
     width: 60,
     height: 70,
   },
