@@ -156,8 +156,7 @@ html {
 }
 
 body {
-  @apply bg-gradient-to-b;
-  background: linear-gradient(to bottom, var(--bg-primary), var(--bg-secondary));
+  @apply bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)];
   color: var(--text-primary);
   transition: background-color 0.5s ease, color 0.5s ease;
 }

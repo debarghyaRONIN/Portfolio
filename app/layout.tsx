@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Debarghya&apos;s Portfolio | ML Engineer & MLOps Enthusiast",
+  title: "Debarghya Saha | ML Engineer & MLOps Enthusiast",
   description: "Portfolio of Debarghya, a Machine Learning Engineer and MLOps Enthusiast passionate about building AI-driven solutions.",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 };
 
 export default function RootLayout({

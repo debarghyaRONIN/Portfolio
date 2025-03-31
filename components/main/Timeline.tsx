@@ -187,14 +187,14 @@ const Timeline = () => {
     {
       year: "2024",
       title: "Smart India Hackathon,2024(Winner)",
-      description: "For SIH 2024, Our team tackled Problem Statement #1742 from the Ministry of Education, focused on standardizing odd schools. As an MLOps & AI Developer, I built API&apos;S a automation system for decision-making and integrated Generative AI for implementation planning. To ensure security, we implemented secure file transfer and explored bio-nano storage solutions.",
+      description: "For SIH 2024, Our team tackled Problem Statement #1742 from the Ministry of Education, focused on standardizing odd schools. As an MLOps & AI Developer, I built APIs and automation system for decision-making and integrated Generative AI for implementation planning. To ensure security, we implemented secure file transfer and explored bio-nano storage solutions.",
       images: ["/sih2024us.jpeg", "/TeamBengalTigersApex.jpeg", "/Sih2024me_with_trophy.jpeg"],
       isLeft: true,
     },
     {
       year: "2023",
       title: "Internal Smart India Hackathon,2023(Winner)",
-      description: "In 2023, we set out to compete in the Smart India Hackathon (SIH) with high hopes. Our team worked hard, brainstorming ideas, refining our approach, and tackling the problem statement head-on and we won the college level hackathon. The problem was on disaster management.Our team made a WebApp Prototype that helps people to get information about disasters and how to survive in disasters. As a 3d artist I created simulation to educate people on how to survive in disasters. But despite our efforts, we couldn&apos;t make it to the final rounds. REASON - No team were shortlisted from the problem statement we selected.",
+      description: "In 2023, we set out to compete in the Smart India Hackathon (SIH) with high hopes. Our team worked hard, brainstorming ideas, refining our approach, and tackling the problem statement head-on and we won the college level hackathon. The problem was on disaster management.Our team made a WebApp Prototype that helps people to get information about disasters and how to survive in disasters. As a 3d artist I created simulation to educate people on how to survive in disasters. But despite our efforts, we couldn't make it to the final rounds. REASON - No team were shortlisted from the problem statement we selected.",
       images: ["/Sih2023.jpeg", "/Prize.jpeg"],
       isLeft: false,
     }
