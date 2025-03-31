@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { EnvelopeIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 
 const Footer = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
