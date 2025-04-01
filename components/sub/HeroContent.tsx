@@ -2,10 +2,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  slideInFromLeft,
-  slideInFromRight,
-} from "@/utils/motion";
 import { animateHero } from "@/utils/gsapAnimations";
 import Image from "next/image";
 import { gsap } from "gsap";
@@ -18,7 +14,6 @@ const HeroContent = ({ isDarkMode = true }: HeroContentProps) => {
   const heroRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const glareRef = useRef<HTMLDivElement>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const tl = animateHero();
@@ -51,9 +46,6 @@ const HeroContent = ({ isDarkMode = true }: HeroContentProps) => {
       // Calculate mouse position relative to element (0 to 100%)
       const relativeX = Math.max(0, Math.min(100, ((e.clientX - left) / width) * 100));
       const relativeY = Math.max(0, Math.min(100, ((e.clientY - top) / height) * 100));
-      
-      // Set state for use in other elements if needed
-      setMousePosition({ x: percentX, y: percentY });
       
       // Apply rotation to the image (max 10 degrees)
       const rotateY = -percentX * 15;

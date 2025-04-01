@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { slideInFromLeft, slideInFromRight } from "@/utils/motion";
 import { animateAbout } from "@/utils/gsapAnimations";
 import Image from "next/image";
 import { EnvelopeIcon } from "@heroicons/react/24/outline";

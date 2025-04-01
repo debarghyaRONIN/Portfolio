@@ -19,7 +19,6 @@ const Hero = () => {
   const gridRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const particlesContainerRef = useRef<HTMLDivElement>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const particlesRef = useRef<Particle[]>([]);
 
   // Listen for theme changes from the navbar
@@ -185,9 +184,6 @@ const Hero = () => {
       // Calculate cursor position as percentage of viewport
       const mouseX = e.clientX / viewportWidth - 0.5; // -0.5 to 0.5
       const mouseY = e.clientY / viewportHeight - 0.5; // -0.5 to 0.5
-      
-      // Set state for other components
-      setMousePosition({ x: mouseX, y: mouseY });
       
       // Apply parallax effect to grid with subtle movement
       gsap.to(gridElement, {

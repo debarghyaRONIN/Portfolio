@@ -19,7 +19,7 @@ interface ProjectCardProps {
 }
 
 // Project Card component with 3D tilt effect
-const ProjectCard = ({ project, index, isDarkMode }: ProjectCardProps) => {
+const ProjectCard = ({ project, isDarkMode }: ProjectCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const glareRef = useRef<HTMLDivElement>(null);
