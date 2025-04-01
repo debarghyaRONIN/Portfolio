@@ -37,35 +37,57 @@ const Navbar = () => {
       if (isScrolling) return;
       
       // Determine active section based on scroll position
-      const sections = navItems.map(item => item.href.substring(1));
+      const sections = navItems.map(item => item.href.substring(1))
+        .filter(section => section !== "achievements"); // Don't include achievements in automatic detection
+      
       const currentSection = sections.find(section => {
         const element = document.getElementById(section);
         if (element) {
           const rect = element.getBoundingClientRect();
-          return rect.top <= 100 && rect.bottom >= 100;
+          return rect.top <= 150 && rect.bottom >= 50;
         }
         return false;
       });
       
+      // Special case for achievements section - if it's active, don't change it based on scroll
+      if (activeSection === "achievements" && !currentSection) {
+        return;
+      }
+      
       if (currentSection && currentSection !== activeSection) {
-        // Use gsap.set instead of gsap.to to prevent animation glitches
-        gsap.set(`.nav-item-${activeSection}`, {
-          scale: 1,
-          fontWeight: "normal"
-        });
-        
-        setActiveSection(currentSection);
-        
-        // Use gsap.set for the new active section too
-        gsap.set(`.nav-item-${currentSection}`, {
-          scale: 1.05,
-          fontWeight: "bold"
+        // Use requestAnimationFrame to ensure smoother UI updates
+        requestAnimationFrame(() => {
+          // Ensure we don't set highlights multiple times in rapid succession
+          gsap.set(`.nav-item-${activeSection}`, {
+            scale: 1,
+            fontWeight: "normal"
+          });
+          
+          setActiveSection(currentSection);
+          
+          gsap.set(`.nav-item-${currentSection}`, {
+            scale: 1.05,
+            fontWeight: "bold"
+          });
         });
       }
     };
-    window.addEventListener("scroll", handleScroll);
-
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    // Use a throttled scroll event listener for better performance
+    let ticking = false;
+    const scrollListener = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    
+    window.addEventListener("scroll", scrollListener);
+    
+    return () => window.removeEventListener("scroll", scrollListener);
   }, [activeSection, isScrolling, navItems]);
 
   // Theme toggle function
@@ -129,6 +151,20 @@ const Navbar = () => {
     setIsOpen(false); // Close mobile menu
     const targetSection = document.getElementById(sectionId);
     
+    // Always update active state for achievements even if there's an issue with the section element
+    if (sectionId === "achievements") {
+      setActiveSection(sectionId);
+      gsap.set(`.nav-item-${activeSection}`, {
+        scale: 1,
+        fontWeight: "normal"
+      });
+      
+      gsap.set(`.nav-item-${sectionId}`, {
+        scale: 1.05,
+        fontWeight: "bold"
+      });
+    }
+    
     if (targetSection) {
       // Store the current scroll position before scrolling
       previousScrollPosition.current = window.scrollY;
@@ -140,28 +176,34 @@ const Navbar = () => {
         // Update active menu item immediately for better UX
         setActiveSection(sectionId);
         
-        // Don't animate the old button, only set the new one
-        gsap.set(`.nav-item-${activeSection}`, {
-          scale: 1,
-          fontWeight: "normal"
+        // Update highlighting with requestAnimationFrame for better performance
+        requestAnimationFrame(() => {
+          // Don't animate the old button, only set the new one
+          gsap.set(`.nav-item-${activeSection}`, {
+            scale: 1,
+            fontWeight: "normal"
+          });
+          
+          gsap.set(`.nav-item-${sectionId}`, {
+            scale: 1.05,
+            fontWeight: "bold"
+          });
         });
         
-        gsap.set(`.nav-item-${sectionId}`, {
-          scale: 1.05,
-          fontWeight: "bold"
-        });
-        
-        // Use GSAP for smooth scrolling animation if available
+        // Use GSAP for smooth scrolling animation
         gsap.to(window, {
-          duration: 0.2, 
+          duration: 0.5, // Slightly longer duration for smoother scrolling 
           scrollTo: {
             y: targetSection,
             offsetY: 70, // Account for navbar height
             autoKill: false,
           },
-          ease: "none",
+          ease: "power2.out", // Changed to power2.out for smoother scroll
           onComplete: () => {
-            setIsScrolling(false);
+            // Add a small delay before disabling scrolling state to prevent immediate recalculation
+            setTimeout(() => {
+              setIsScrolling(false);
+            }, 200);
           }
         });
       } catch {

@@ -224,7 +224,7 @@ const Timeline = () => {
         <div
           className="flex flex-col gap-10"
         >
-          <h2 className={`project-header text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} text-center transition-colors duration-500`}>
+          <h2 className={`text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} text-center transition-colors duration-500`}>
             Achievements
           </h2>
           
