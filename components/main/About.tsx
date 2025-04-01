@@ -93,9 +93,6 @@ const About = () => {
             </h2>
             <div className={`space-y-4 ${textClasses} transition-colors duration-500`}>
               <p className="text-lg leading-relaxed">
-              A Data Science & MLOps Engineer with a strong background in Data Science, AI model development, and data engineering.
-              </p>
-              <p className="text-lg leading-relaxed">
               A Data Science and MLOps Engineer with a strong background in AI model development, data engineering, and machine learning frameworks. My expertise lies in building intelligent systems, optimizing workflows, and deploying scalable AI-driven applications. Additionally, I have a solid understanding of computer networks, backend development, and software architecture.
               </p>
               <p className="text-lg leading-relaxed">
