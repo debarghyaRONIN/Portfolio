@@ -98,6 +98,9 @@ const About = () => {
               <p className="text-lg leading-relaxed">
               I have experience working with machine learning frameworks, MLOps pipelines, and AI-driven applications. My projects involve building intelligent systems, optimizing workflows, and deploying scalable solutions. I also have a solid understanding of computer networks, backend development, and software architecture.
               </p>
+              <p className="text-lg leading-relaxed">
+                In my free time, i sometimes make 3d Art too (I was a 3d Artist Freelancer till 2nd Year of my college)
+              </p>
             </div>
             
             <div className="flex flex-wrap gap-4">
