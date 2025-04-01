@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { slideInFromLeft, slideInFromRight } from "@/utils/motion";
+import { animateTimeline } from "@/utils/gsapAnimations";
 import Image from "next/image";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 
@@ -74,10 +73,9 @@ const TimelineItem = ({ year, title, description, images, isLeft, isDarkMode }: 
     : "from-blue-600 via-blue-500 to-blue-400 shadow-blue-500/30";
 
   return (
-    <div className={`flex flex-col md:flex-row w-full items-center justify-center my-8 ${isLeft ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
+    <div className={`timeline-item flex flex-col md:flex-row w-full items-center justify-center my-8 ${isLeft ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
       {/* Content side */}
-      <motion.div 
-        variants={isLeft ? slideInFromLeft(0.5) : slideInFromRight(0.5)}
+      <div 
         className="w-full md:w-1/2 p-4"
       >
         <div className={`${cardBgClass} p-6 rounded-lg border ${cardBorderClass} shadow-lg backdrop-filter backdrop-blur-sm transition-colors duration-500`}>
@@ -87,7 +85,7 @@ const TimelineItem = ({ year, title, description, images, isLeft, isDarkMode }: 
           <h3 className={`text-xl font-bold ${titleClass} mt-2 transition-colors duration-500`}>{title}</h3>
           <p className={`${descriptionClass} mt-2 transition-colors duration-500`}>{description}</p>
         </div>
-      </motion.div>
+      </div>
       
       {/* Center wire - hidden on mobile, shown on md and larger */}
       <div className="hidden md:flex mx-4 h-full flex-col items-center">
@@ -102,8 +100,7 @@ const TimelineItem = ({ year, title, description, images, isLeft, isDarkMode }: 
       </div>
       
       {/* Image side with navigation buttons */}
-      <motion.div 
-        variants={isLeft ? slideInFromRight(0.5) : slideInFromLeft(0.5)}
+      <div 
         className="w-full md:w-1/2 p-4 relative"
       >
         <div ref={containerRef} className={`relative h-72 md:h-80 w-full rounded-xl border-2 ${cardBorderClass} shadow-lg overflow-hidden ${cardBgClass} backdrop-filter backdrop-blur-sm transition-colors duration-500`}>
@@ -143,13 +140,14 @@ const TimelineItem = ({ year, title, description, images, isLeft, isDarkMode }: 
             </div>
           )}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
 
 const Timeline = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Listen for theme changes
   useEffect(() => {
@@ -172,6 +170,11 @@ const Timeline = () => {
     observer.observe(document.documentElement, { attributes: true });
     
     return () => observer.disconnect();
+  }, []);
+
+  // Initialize GSAP animations
+  useEffect(() => {
+    animateTimeline();
   }, []);
 
   // Dynamic classes based on theme
@@ -205,6 +208,7 @@ const Timeline = () => {
       {/* Video Background */}
       <div className="absolute inset-0 w-full h-full overflow-hidden z-0">
         <video
+          ref={videoRef}
           autoPlay
           muted
           loop
@@ -217,12 +221,10 @@ const Timeline = () => {
 
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <motion.div
-          initial="hidden"
-          animate="visible"
+        <div
           className="flex flex-col gap-10"
         >
-          <h2 className={`text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} text-center transition-colors duration-500`}>
+          <h2 className={`project-header text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} text-center transition-colors duration-500`}>
             Achievements
           </h2>
           
@@ -231,7 +233,7 @@ const Timeline = () => {
               <TimelineItem key={index} {...item} isDarkMode={isDarkMode} />
             ))}
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

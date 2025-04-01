@@ -168,3 +168,204 @@ body {
               border-color 0.5s ease,
               box-shadow 0.5s ease;
 }
+
+/* GSAP-specific animations */
+
+/* Page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s, transform 0.5s;
+}
+
+.page-transition-exit {
+  opacity: 1;
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Floating animation */
+.float {
+  animation: float 6s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Shimmering text effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--accent-color) 0%,
+    var(--accent-secondary) 50%,
+    var(--accent-color) 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* Gradient border animation */
+.gradient-border {
+  position: relative;
+  border-radius: 0.5rem;
+  z-index: 0;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(
+    45deg,
+    var(--accent-color),
+    var(--accent-secondary),
+    var(--accent-color)
+  );
+  background-size: 300% 300%;
+  border-radius: 0.625rem;
+  animation: border-animation 8s ease alternate infinite;
+}
+
+@keyframes border-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Parallax effect classes */
+.parallax {
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+
+.parallax-slow {
+  transform: translateZ(-10px) scale(2);
+}
+
+.parallax-medium {
+  transform: translateZ(-5px) scale(1.5);
+}
+
+.parallax-fast {
+  transform: translateZ(0px) scale(1);
+}
+
+/* Custom cursor style - used by GSAP */
+.custom-cursor {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(255, 100, 0, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  transition: width 0.3s, height 0.3s, border-color 0.3s;
+}
+
+.cursor-dot {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  background-color: rgba(255, 100, 0, 0.8);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+}
+
+.cursor-hover {
+  width: 60px;
+  height: 60px;
+  border-color: rgba(255, 180, 0, 0.5);
+  background-color: rgba(255, 100, 0, 0.1);
+  mix-blend-mode: difference;
+}
+
+/* Disable custom cursor on mobile */
+@media (max-width: 768px) {
+  .custom-cursor, .cursor-dot {
+    display: none;
+  }
+}
+
+/* 3D Transform and Card Tilt Effect Styles */
+.perspective-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.transform-gpu {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+/* Enhanced card-tilt effect for 3D interactions */
+.card-tilt {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.card-tilt:hover {
+  transform: rotateX(var(--rotateX)) rotateY(var(--rotateY));
+}
+
+.card-tilt-glare {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: radial-gradient(
+    circle at var(--pointer-x) var(--pointer-y),
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0) 80%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.card-tilt:hover .card-tilt-glare {
+  opacity: 1;
+}

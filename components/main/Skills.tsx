@@ -8,6 +8,7 @@ import {
     Skill
 } from "@/constants";
 import React, { useState, useEffect } from "react";
+import { animateSkills } from "@/utils/gsapAnimations";
 import SkillDataProvider from "../sub/SkillDataProvider";
 import SkillText from "../sub/SkillText";
 
@@ -35,6 +36,11 @@ const Skills = () => {
         observer.observe(document.documentElement, { attributes: true });
         
         return () => observer.disconnect();
+    }, []);
+
+    // Initialize GSAP animations
+    useEffect(() => {
+        animateSkills();
     }, []);
 
     // Dynamic classes based on theme
@@ -68,13 +74,15 @@ const Skills = () => {
 
             {/* Content Layer */}
             <div className="relative z-[2] w-full max-w-7xl mx-auto px-4">
-                <SkillText isDarkMode={isDarkMode} />
+                <div className="skill-header">
+                    <SkillText isDarkMode={isDarkMode} />
+                </div>
 
                 <div className="flex flex-col items-center gap-12 mt-12">
                     {/* Skill Categories */}
                     <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Main Skills */}
-                        <div className={`backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
+                        <div className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
                             <h3 className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}>Core Technologies</h3>
                             <div className="flex flex-wrap justify-center gap-4">
                                 {Skill_data.map((image: Skill, index: number) => (
@@ -91,7 +99,7 @@ const Skills = () => {
                         </div>
 
                         {/* Frontend Skills */}
-                        <div className={`backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
+                        <div className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
                             <h3 className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}>Frontend</h3>
                             <div className="flex flex-wrap justify-center gap-4">
                                 {Frontend_skill.map((image: Skill, index: number) => (
@@ -108,7 +116,7 @@ const Skills = () => {
                         </div>
                         
                         {/* ML/AI Skills */}
-                        <div className={`backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
+                        <div className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
                             <h3 className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}>ML/AI</h3>
                             <div className="flex flex-wrap justify-center gap-4">
                                 {ML_AI_Skills.map((image: Skill, index: number) => (
@@ -125,7 +133,7 @@ const Skills = () => {
                         </div>
                         
                         {/* Backend Skills */}
-                        <div className={`backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
+                        <div className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
                             <h3 className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}>Backend</h3>
                             <div className="flex flex-wrap justify-center gap-4">
                                 {Backend_skill.map((image: Skill, index: number) => (

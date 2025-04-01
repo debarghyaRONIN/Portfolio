@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { slideInFromLeft, slideInFromRight } from "@/utils/motion";
+import { animateAbout } from "@/utils/gsapAnimations";
 import Image from "next/image";
 import { EnvelopeIcon } from "@heroicons/react/24/outline";
 
@@ -30,6 +31,11 @@ const About = () => {
     observer.observe(document.documentElement, { attributes: true });
     
     return () => observer.disconnect();
+  }, []);
+
+  // Initialize GSAP animations
+  useEffect(() => {
+    animateAbout();
   }, []);
 
   // Dynamic classes based on theme
@@ -61,15 +67,12 @@ const About = () => {
   return (
     <div className={`relative flex flex-col h-full w-full transition-colors duration-500 ${isDarkMode ? 'bg-[#0A0A0A]' : 'bg-gray-100'}`} id="about">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <motion.div
-          initial="hidden"
-          animate="visible"
+        <div
           className="flex flex-col md:flex-row items-center justify-between gap-10"
         >
           {/* Image Section */}
-          <motion.div
-            variants={slideInFromLeft(0.5)}
-            className="w-full md:w-1/2 flex justify-center"
+          <div
+            className="about-image-container w-full md:w-1/2 flex justify-center"
           >
             <div className="relative w-[300px] h-[450px] rounded-xl overflow-hidden shadow-2xl transition-all duration-500">
               <Image
@@ -81,12 +84,11 @@ const About = () => {
               />
               <div className={`absolute inset-0 ${overlayGradient}`}></div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Text Section */}
-          <motion.div
-            variants={slideInFromRight(0.5)}
-            className="w-full md:w-1/2 space-y-6"
+          <div
+            className="about-text-container w-full md:w-1/2 space-y-6"
           >
             <h2 className={`text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} transition-colors duration-500`}>
               About Me
@@ -103,7 +105,7 @@ const About = () => {
               </p>
             </div>
             
-            <div className="flex flex-wrap gap-4">
+            <div className="about-buttons flex flex-wrap gap-4">
               <a
                 href="#skills"
                 className={`px-6 py-3 bg-gradient-to-r ${primaryButtonGradient} text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105`}
@@ -152,8 +154,8 @@ const About = () => {
                 <EnvelopeIcon className="w-6 h-6" aria-hidden="true" />
               </a>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   );

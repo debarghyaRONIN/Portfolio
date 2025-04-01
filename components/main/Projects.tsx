@@ -4,14 +4,268 @@ import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
+import { animateProjects } from "@/utils/gsapAnimations";
+
+interface ProjectCardProps {
+  project: {
+    title: string;
+    description: string;
+    image: string;
+    technologies: string[];
+    link: string;
+  };
+  index: number;
+  isDarkMode: boolean;
+}
+
+// Project Card component with 3D tilt effect
+const ProjectCard = ({ project, index, isDarkMode }: ProjectCardProps) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
+  const glareRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Card styling classes
+  const cardBgClasses = isDarkMode
+    ? "bg-black/30 border-gray-800"
+    : "bg-white/80 border-gray-200";
+  
+  const headingClasses = isDarkMode
+    ? "text-white"
+    : "text-gray-800";
+  
+  const descriptionClasses = isDarkMode
+    ? "text-gray-300"
+    : "text-gray-700";
+  
+  const cardHoverClasses = isDarkMode
+    ? "hover:bg-[#111]/60 hover:border-orange-700/40"
+    : "hover:bg-white hover:border-blue-400/60";
+
+  useEffect(() => {
+    const card = cardRef.current;
+    const glareElement = glareRef.current;
+    const image = imageRef.current;
+    const content = contentRef.current;
+    
+    if (!card || !glareElement || !image || !content) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Get card dimensions and position
+      const { left, top, width, height } = card.getBoundingClientRect();
+      
+      // Calculate mouse position relative to card center (range: -1 to 1)
+      const centerX = left + width / 2;
+      const centerY = top + height / 2;
+      const percentX = (e.clientX - centerX) / (width / 2);
+      const percentY = (e.clientY - centerY) / (height / 2);
+      
+      // Calculate position for glare effect (range: 0 to 100%)
+      const glareX = Math.max(0, Math.min(100, ((e.clientX - left) / width) * 100));
+      const glareY = Math.max(0, Math.min(100, ((e.clientY - top) / height) * 100));
+      
+      // Apply rotation to card (max 10 degrees)
+      const rotateY = -percentX * 10;
+      const rotateX = percentY * 10;
+      
+      // Apply 3D transforms with GSAP
+      gsap.to(card, {
+        rotateY: rotateY,
+        rotateX: rotateX,
+        transformPerspective: 1000,
+        transformStyle: "preserve-3d",
+        ease: "power2.out",
+        duration: 0.5
+      });
+      
+      // Subtle movement for the image
+      gsap.to(image, {
+        x: percentX * 15,
+        y: percentY * 15,
+        ease: "power2.out",
+        duration: 0.5
+      });
+      
+      // Even more subtle movement for the content
+      gsap.to(content, {
+        x: percentX * 5,
+        y: percentY * 5,
+        ease: "power2.out",
+        duration: 0.5
+      });
+      
+      // Update glare effect
+      gsap.to(glareElement, {
+        opacity: 0.15,
+        background: `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 70%)`,
+        duration: 0.3
+      });
+    };
+
+    const handleMouseLeave = () => {
+      // Reset all transformations on mouse leave
+      gsap.to(card, {
+        rotateY: 0,
+        rotateX: 0,
+        duration: 0.6,
+        ease: "power3.out"
+      });
+      
+      gsap.to(image, {
+        x: 0,
+        y: 0,
+        duration: 0.6,
+        ease: "power3.out"
+      });
+      
+      gsap.to(content, {
+        x: 0,
+        y: 0,
+        duration: 0.6,
+        ease: "power3.out"
+      });
+      
+      // Hide glare
+      gsap.to(glareElement, {
+        opacity: 0,
+        duration: 0.3
+      });
+    };
+
+    // Add shadow and scale effect on hover
+    card.addEventListener('mouseenter', () => {
+      gsap.to(card, {
+        boxShadow: isDarkMode 
+          ? "0 20px 40px rgba(255, 100, 0, 0.2), 0 0 20px rgba(255, 100, 0, 0.1)" 
+          : "0 20px 40px rgba(0, 100, 255, 0.2), 0 0 20px rgba(0, 100, 255, 0.1)",
+        scale: 1.02,
+        duration: 0.4
+      });
+    });
+
+    card.addEventListener('mouseleave', () => {
+      gsap.to(card, {
+        boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+        scale: 1,
+        duration: 0.4
+      });
+    });
+
+    // Add event listeners
+    card.addEventListener("mousemove", handleMouseMove);
+    card.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      card.removeEventListener("mousemove", handleMouseMove);
+      card.removeEventListener("mouseleave", handleMouseLeave);
+      card.removeEventListener('mouseenter', () => {});
+      card.removeEventListener('mouseleave', () => {});
+    };
+  }, [isDarkMode]);
+
+  return (
+    <div
+      ref={cardRef}
+      className={`project-card rounded-lg border ${cardBgClasses} backdrop-blur-sm overflow-hidden shadow-lg transition-all duration-500 ${cardHoverClasses} perspective-container`}
+      style={{
+        transformStyle: 'preserve-3d',
+        perspective: '1000px'
+      }}
+    >
+      {/* Glare overlay */}
+      <div 
+        ref={glareRef} 
+        className="absolute inset-0 z-30 pointer-events-none opacity-0"
+        style={{ 
+          borderRadius: 'inherit',
+          mixBlendMode: 'overlay'
+        }}
+      ></div>
+      
+      {/* Card edge highlight */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-20" 
+        style={{
+          background: isDarkMode 
+            ? 'linear-gradient(135deg, rgba(255,100,0,0.05) 0%, transparent 50%, rgba(255,100,0,0.05) 100%)' 
+            : 'linear-gradient(135deg, rgba(0,100,255,0.05) 0%, transparent 50%, rgba(0,100,255,0.05) 100%)',
+          borderRadius: 'inherit'
+        }}
+      ></div>
+      
+      {/* Image container */}
+      <div 
+        ref={imageRef}
+        className="w-full h-52 relative overflow-hidden transform-gpu"
+        style={{
+          transformStyle: 'preserve-3d',
+          transform: 'translateZ(20px)'
+        }}
+      >
+        <Image
+          src={project.image}
+          alt={project.title}
+          fill
+          className="object-cover transform-gpu"
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
+      </div>
+      
+      {/* Content */}
+      <div 
+        ref={contentRef}
+        className="p-6 space-y-4 transform-gpu"
+        style={{
+          transformStyle: 'preserve-3d',
+          transform: 'translateZ(10px)'
+        }}
+      >
+        <h3 className={`text-xl font-bold ${headingClasses} transition-colors duration-500`}>
+          {project.title}
+        </h3>
+        
+        <p className={`${descriptionClasses} transition-colors duration-500`}>
+          {project.description}
+        </p>
+        
+        <div className="flex flex-wrap gap-2 mt-4">
+          {project.technologies.map((tech, techIndex) => (
+            <span
+              key={techIndex}
+              className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                isDarkMode 
+                  ? 'bg-orange-900/20 text-orange-300' 
+                  : 'bg-blue-100 text-blue-800'
+              } transition-colors duration-500`}
+            >
+              {tech}
+            </span>
+          ))}
+        </div>
+        
+        <div className="pt-4">
+          <a
+            href={project.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center px-4 py-2 rounded-lg font-medium ${
+              isDarkMode
+                ? 'bg-gradient-to-r from-red-600 to-yellow-500 text-white hover:from-yellow-500 hover:to-red-600'
+                : 'bg-gradient-to-r from-blue-600 to-blue-400 text-white hover:from-blue-400 hover:to-blue-600'
+            } transition-all duration-300 transform hover:scale-105`}
+          >
+            View Project
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Projects = () => {
   const projectsRef = useRef(null);
   const titleRef = useRef(null);
   const descriptionRef = useRef(null);
-  const projectRefsArray = useRef<(HTMLDivElement | null)[]>([]);
-  const techBadgeRefs = useRef<(HTMLSpanElement | null)[][]>([]);
-  const imageFadeRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
@@ -53,168 +307,14 @@ const Projects = () => {
     // Add resize listener
     window.addEventListener("resize", checkMobile);
     
-    // Create a context to prevent GSAP conflicts
-    const ctx = gsap.context(() => {
-      // Title animation with enhanced visual effect
-      gsap.fromTo(titleRef.current, 
-        { 
-          y: 40, 
-          opacity: 0,
-          scale: 0.9
-        },
-        { 
-          y: 0, 
-          opacity: 1,
-          scale: 1, 
-          duration: 0.8, 
-          ease: "elastic.out(1, 0.7)",
-          clearProps: "all" // Prevents glitches after animation
-        }
-      );
-      
-      // Description animation with enhanced effect
-      gsap.fromTo(descriptionRef.current,
-        { 
-          y: 30, 
-          opacity: 0,
-          scale: 0.95 
-        },
-        { 
-          y: 0, 
-          opacity: 1,
-          scale: 1, 
-          duration: 0.8, 
-          delay: 0.3, 
-          ease: "power2.out",
-          clearProps: "all"
-        }
-      );
-      
-      // Project cards animation with staggered effect
-      projectRefsArray.current.forEach((project, index) => {
-        if (project) {
-          // Card animation - more dramatic slide-in and scale effect
-          const xOffset = isMobile ? 20 : 80;
-          const entryDelay = 0.3 + (index * 0.2);
-          
-          // Base card animation
-          gsap.fromTo(project,
-            { 
-              x: index % 2 === 0 ? -xOffset : xOffset, 
-              y: isMobile ? 20 : 40,
-              opacity: 0,
-              scale: 0.9,
-              rotateY: index % 2 === 0 ? -5 : 5
-            },
-            { 
-              x: 0, 
-              y: 0,
-              opacity: 1,
-              scale: 1,
-              rotateY: 0,
-              duration: 1, 
-              delay: entryDelay, 
-              ease: "power3.out",
-              clearProps: "transform",
-              scrollTrigger: {
-                trigger: project,
-                start: "top bottom-=100",
-                toggleActions: "play none none none",
-                invalidateOnRefresh: true
-              }
-            }
-          );
-          
-          // Add shine effect on the cards
-          gsap.fromTo(project,
-            {
-              backgroundPosition: "0% 0%"
-            },
-            {
-              backgroundPosition: "100% 100%",
-              duration: 1.5,
-              delay: entryDelay + 0.5,
-              ease: "sine.inOut",
-              scrollTrigger: {
-                trigger: project,
-                start: "top bottom-=100"
-              }
-            }
-          );
-          
-          // Image reveal animation
-          if (imageFadeRefs.current[index]) {
-            gsap.fromTo(imageFadeRefs.current[index],
-              {
-                opacity: 0,
-                scale: 1.1
-              },
-              {
-                opacity: 1,
-                scale: 1,
-                duration: 1.2,
-                delay: entryDelay + 0.1,
-                ease: "power2.out",
-                scrollTrigger: {
-                  trigger: project,
-                  start: "top bottom-=100"
-                }
-              }
-            );
-          }
-          
-          // Tech badge staggered animation
-          if (techBadgeRefs.current[index] && techBadgeRefs.current[index].length > 0) {
-            gsap.fromTo(techBadgeRefs.current[index],
-              {
-                y: 20,
-                opacity: 0,
-                scale: 0.8
-              },
-              {
-                y: 0,
-                opacity: 1,
-                scale: 1,
-                duration: 0.4,
-                stagger: 0.1,
-                delay: entryDelay + 0.4,
-                ease: "back.out(1.7)",
-                scrollTrigger: {
-                  trigger: project,
-                  start: "top bottom-=80"
-                }
-              }
-            );
-          }
-        }
-      });
-    });
+    // Initialize project animations
+    animateProjects();
     
     // Cleanup function to prevent memory leaks
     return () => {
       window.removeEventListener("resize", checkMobile);
-      ctx.revert(); // This will kill all animations created in this context
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
     };
   }, [isMobile]); // Re-run when mobile state changes
-
-  // Helper function to store tech badge refs
-  const setTechBadgeRef = (el: HTMLSpanElement | null, projectIndex: number, badgeIndex: number) => {
-    if (!techBadgeRefs.current[projectIndex]) {
-      techBadgeRefs.current[projectIndex] = [];
-    }
-    techBadgeRefs.current[projectIndex][badgeIndex] = el;
-  };
-
-  // Helper function to store image refs
-  const setImageFadeRef = (el: HTMLDivElement | null, index: number) => {
-    imageFadeRefs.current[index] = el;
-  };
-
-  // Clear refs array and set its length to match projects
-  const setProjectRefs = (el: HTMLDivElement | null, index: number) => {
-    projectRefsArray.current[index] = el;
-  };
 
   const projects = [
     {
@@ -243,230 +343,50 @@ const Projects = () => {
     ? "bg-gradient-to-r from-red-900/5 via-orange-800/5 to-yellow-700/5"
     : "bg-gradient-to-r from-blue-600/10 via-blue-500/10 to-blue-400/5";
   
-  const cardBgClasses = isDarkMode
-    ? "bg-black/30 border-gray-800"
-    : "bg-white/80 border-gray-200";
-  
-  const headingClasses = isDarkMode
-    ? "text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-500"
-    : "text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400";
-
-  const textClasses = isDarkMode
-    ? "text-gray-300"
-    : "text-gray-700";
-  
-  const techBadgeClasses = isDarkMode
-    ? "bg-[#161616] text-red-400"
-    : "bg-gray-200 text-blue-500";
-  
-  const buttonClasses = isDarkMode
-    ? "bg-gradient-to-r from-red-700 to-yellow-600 text-white hover:from-yellow-600 hover:to-red-700"
-    : "bg-gradient-to-r from-blue-600 to-blue-400 text-white hover:from-blue-500 hover:to-blue-600";
-
-  const cardTitleClasses = "text-white";
-  
-  const cardOverlayClasses = isDarkMode 
-    ? "bg-gradient-to-t from-black/80 to-transparent" 
-    : "bg-gradient-to-t from-black/70 to-transparent";
-
-  const cardHoverClasses = isDarkMode
-    ? "hover:shadow-xl hover:shadow-red-900/10 hover:border-red-700/30 hover:translate-y-[-5px]"
-    : "hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-300 hover:translate-y-[-5px]";
+  const headingGradient = isDarkMode 
+    ? "from-red-600 to-yellow-500" 
+    : "from-blue-600 to-blue-400";
 
   return (
-    <div 
-      className={`relative flex flex-col h-full w-full transition-colors duration-500`} 
+    <section 
       id="projects" 
       ref={projectsRef}
+      className={`${bgClasses} relative py-20 transition-colors duration-500`}
     >
-      {/* Animated particles background */}
-      <div className="absolute inset-0 w-full h-full z-[1] overflow-hidden">
-        <div className={`absolute inset-0 transition-colors duration-500 ${bgClasses}`}></div>
+      <div className="absolute inset-0 z-0 transition-colors duration-500">
+        <div className={`absolute inset-0 ${gradientClasses}`}></div>
         <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-        <div className={`absolute inset-0 transition-colors duration-500 ${gradientClasses}`}></div>
-        
-        {/* Animated orbs/particles */}
-        <div className="absolute inset-0 opacity-20">
-          {isDarkMode ? (
-            <div className="orb red"></div>
-          ) : (
-            <div className="orb light"></div>
-          )}
-          <div className="orb small"></div>
-          <div className="orb tiny"></div>
-        </div>
       </div>
       
-      <div className="relative z-[2] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-        <div className="flex flex-col gap-8 md:gap-12">
-          <div className="text-center relative">            
-            <h2 
-              ref={titleRef}
-              className={`text-3xl md:text-4xl font-bold mb-3 md:mb-4 transition-colors duration-500 ${headingClasses}`}
-            >
-              Projects
-            </h2>
-            
-            <p
-              ref={descriptionRef}
-              className={`text-xs md:text-base max-w-[600px] mx-auto px-2 transition-colors duration-500 ${textClasses}`}
-            >
-              Showcasing innovative solutions where theory meets practice. Each project represents a unique challenge solved with technical expertise.
-            </p>
-          </div>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16 space-y-4">
+          <h2 
+            ref={titleRef}
+            className={`project-header text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} transition-colors duration-500`}
+          >
+            Projects & Work
+          </h2>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-            {projects.map((project, index) => (
-              <div
-                key={project.title}
-                ref={(el) => setProjectRefs(el, index)}
-                className={`backdrop-blur-sm rounded-xl overflow-hidden border shadow-xl card-hover transition-all duration-500 ${cardBgClasses} ${cardHoverClasses} animate-card-shine`}
-                style={{ backgroundSize: '200% 200%' }}
-              >
-                {project.image && (
-                  <div className="relative h-48 sm:h-60 w-full overflow-hidden">
-                    <div ref={(el) => setImageFadeRef(el, index)} className="w-full h-full">
-                      <Image
-                        src={project.image}
-                        alt={project.title}
-                        fill
-                        className="object-cover transform hover:scale-110 transition-transform duration-700"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        priority={index < 2}
-                      />
-                    </div>
-                    <div className={`absolute inset-0 transition-colors duration-500 ${cardOverlayClasses}`}></div>
-                    <h3 className={`absolute bottom-3 md:bottom-4 left-4 md:left-6 text-xl md:text-2xl font-bold transition-colors duration-500 ${cardTitleClasses}`}>{project.title}</h3>
-                  </div>
-                )}
-                
-                <div className="p-4 md:p-6">
-                  <p className={`whitespace-pre-line mb-4 md:mb-6 text-xs md:text-sm transition-colors duration-500 ${textClasses}`}>{project.description}</p>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
-                    {project.technologies.map((tech, techIndex) => (
-                      <span
-                        key={tech}
-                        ref={(el) => setTechBadgeRef(el, index, techIndex)}
-                        className={`px-2 py-1 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium transition-colors duration-500 ${techBadgeClasses} hover:scale-110 hover:shadow-lg transition-transform`}
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                  
-                  <a
-                    href={project.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-300 transform hover:scale-105 ${buttonClasses} hover:shadow-lg`}
-                  >
-                    View Project
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4 ml-2 animate-pulse-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
+          <p 
+            ref={descriptionRef}
+            className={`mx-auto max-w-3xl ${isDarkMode ? "text-gray-300" : "text-gray-700"} text-lg transition-colors duration-500`}
+          >
+            I build applications with a focus on performance, scalability, and user experience. Here are some of my recent projects.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {projects.map((project, index) => (
+            <ProjectCard 
+              key={index} 
+              project={project} 
+              index={index} 
+              isDarkMode={isDarkMode} 
+            />
+          ))}
         </div>
       </div>
-
-      {/* CSS for animated orbs */}
-      <style jsx>{`
-        .orb {
-          position: absolute;
-          width: 300px;
-          height: 300px;
-          border-radius: 50%;
-          filter: blur(80px);
-          opacity: 0.3;
-          animation: orbFloat 15s ease-in-out infinite alternate;
-        }
-        .orb.red {
-          background: radial-gradient(circle, rgba(239,68,68,0.4) 0%, rgba(185,28,28,0.1) 70%);
-          top: 10%;
-          right: 10%;
-        }
-        .orb.light {
-          background: radial-gradient(circle, rgba(59,130,246,0.3) 0%, rgba(37,99,235,0.1) 70%);
-          top: 10%;
-          right: 10%;
-        }
-        .orb.small {
-          width: 150px;
-          height: 150px;
-          background: radial-gradient(circle, ${isDarkMode ? 
-            'rgba(245,158,11,0.2) 0%, rgba(252,211,77,0.1) 70%' : 
-            'rgba(96,165,250,0.2) 0%, rgba(147,197,253,0.1) 70%'});
-          bottom: 30%;
-          left: 10%;
-          animation-delay: -5s;
-          animation-duration: 20s;
-        }
-        .orb.tiny {
-          width: 80px;
-          height: 80px;
-          background: radial-gradient(circle, ${isDarkMode ? 
-            'rgba(244,63,94,0.2) 0%, rgba(251,113,133,0.1) 70%' : 
-            'rgba(59,130,246,0.2) 0%, rgba(96,165,250,0.1) 70%'});
-          top: 60%;
-          left: 30%;
-          animation-delay: -2s;
-          animation-duration: 10s;
-        }
-        
-        @keyframes orbFloat {
-          0% {
-            transform: translate(0, 0) scale(1);
-          }
-          50% {
-            transform: translate(30px, 20px) scale(1.05);
-          }
-          100% {
-            transform: translate(-30px, -20px) scale(0.95);
-          }
-        }
-        
-        .animate-card-shine {
-          background-image: linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0) 0%,
-            rgba(255, 255, 255, 0) 40%,
-            rgba(255, 255, 255, 0.1) 50%,
-            rgba(255, 255, 255, 0) 60%,
-            rgba(255, 255, 255, 0) 100%
-          );
-          animation: shine 5s infinite;
-        }
-        
-        @keyframes shine {
-          0% {
-            background-position: -100% -100%;
-          }
-          100% {
-            background-position: 200% 200%;
-          }
-        }
-        
-        .animate-pulse-subtle {
-          animation: pulsate 2s ease-in-out infinite;
-        }
-        
-        @keyframes pulsate {
-          0% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.05);
-          }
-          100% {
-            transform: scale(1);
-          }
-        }
-      `}</style>
-    </div>
+    </section>
   );
 };
 
