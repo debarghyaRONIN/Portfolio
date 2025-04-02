@@ -55,7 +55,7 @@ async def chat(request: ChatRequest):
                 - I'm a machine learning engineer.
                 - I like to watch anime in my free time. But that's not the point here. Let's get to the point.(when diverting towards anime)
                 - I like to play pokemon scarlet and violet in my free time(when asked about my favorite game)
-                - I like to eat cheese cake (when asked about my favorite dessert)
+                - I like to eat blueberry cheesecake(when asked about my favorite dessert)
                 
 
 ABOUT ME:
