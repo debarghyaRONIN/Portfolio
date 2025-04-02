@@ -54,6 +54,8 @@ const Chatbot = () => {
     try {
       // Use environment-aware API URL
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      console.log('Using API URL:', apiUrl);
+      
       const response = await fetch(`${apiUrl}/chat`, {
         method: 'POST',
         headers: {
@@ -66,7 +68,9 @@ const Chatbot = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response from chatbot');
+        const errorText = await response.text();
+        console.error('API response not OK:', response.status, errorText);
+        throw new Error(`Failed to get response from chatbot: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();

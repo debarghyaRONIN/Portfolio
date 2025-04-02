@@ -52,7 +52,9 @@ Tools: Jupyter, Postman, MLflow, Hugging Face, Unsloth`
     });
 
     if (!groqResponse.ok) {
-      throw new Error(`API request failed with status ${groqResponse.status}`);
+      const errorBody = await groqResponse.text();
+      console.error('Groq API error:', groqResponse.status, errorBody);
+      throw new Error(`API request failed with status ${groqResponse.status}: ${errorBody}`);
     }
 
     const completionData = await groqResponse.json();
@@ -69,9 +71,13 @@ Tools: Jupyter, Postman, MLflow, Hugging Face, Unsloth`
       conversation_id: conversationId 
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error details:', error);
     return NextResponse.json(
-      { error: 'Failed to process request' }, 
+      { 
+        error: 'Failed to process request',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        groqApiKey: process.env.GROQ_API_KEY ? 'Present (redacted)' : 'Missing' 
+      }, 
       { status: 500 }
     );
   }
