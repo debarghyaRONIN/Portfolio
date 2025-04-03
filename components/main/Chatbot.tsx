@@ -20,10 +20,34 @@ const Chatbot = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
 
-  // Check for dark mode on mount
+  // Check for dark mode on mount and listen for changes
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('light-mode') ? false : true;
-    setIsDarkMode(isDark);
+    // Initial theme check
+    const checkTheme = () => {
+      const isDark = !document.documentElement.classList.contains('light-mode');
+      setIsDarkMode(isDark);
+    };
+    
+    // Check immediately on mount
+    checkTheme();
+    
+    // Create a mutation observer to detect theme changes in real-time
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.attributeName === 'class' && 
+          mutation.target === document.documentElement
+        ) {
+          checkTheme();
+        }
+      });
+    });
+    
+    // Start observing the document root for class changes
+    observer.observe(document.documentElement, { attributes: true });
+    
+    // Clean up observer when component unmounts
+    return () => observer.disconnect();
   }, []);
 
   // Scroll to bottom when new messages arrive

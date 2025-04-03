@@ -91,7 +91,6 @@ const Footer = () => {
         </div>
         
         <div className={`mt-8 pt-8 border-t ${borderClass} text-center ${footerTextClass} text-sm transition-colors duration-500`}>
-          <p>&copy; {new Date().getFullYear()} Debarghya Saha. All rights reserved.</p>
         </div>
       </div>
     </footer>
