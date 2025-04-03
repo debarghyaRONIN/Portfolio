@@ -30,10 +30,6 @@ const ProjectCard = ({ project, isDarkMode }: ProjectCardProps) => {
     ? "bg-black/30 border-gray-800"
     : "bg-white/80 border-gray-200";
   
-  const headingClasses = isDarkMode
-    ? "text-white"
-    : "text-gray-800";
-  
   const descriptionClasses = isDarkMode
     ? "text-gray-300"
     : "text-gray-700";

@@ -4,9 +4,8 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import Image from 'next/image';
-import { rotateIn } from '@/utils/framerAnimations';
 
-interface Props {
+interface SkillDataProviderProps {
     src: string;
     width: number;
     height: number;
@@ -14,7 +13,7 @@ interface Props {
     isDarkMode?: boolean;
 }
 
-const SkillDataProvider = ({ src, width, height, index, isDarkMode = true} : Props) => {
+const SkillDataProvider = ({ src, width, height, index, isDarkMode = true} : SkillDataProviderProps) => {
     const [isMounted, setIsMounted] = useState(false);
     const {ref, inView} = useInView({
         triggerOnce: true,

@@ -2,9 +2,8 @@
 
 import { useEffect } from "react";
 import { initializeGSAPAnimations } from "@/utils/gsapAnimations";
-import { AnimatePresence } from "framer-motion";
 
-export function AnimationInitializer() {
+const AnimationInitializer = () => {
   useEffect(() => {
     // Initialize all GSAP animations
     if (typeof window !== "undefined") {
@@ -31,6 +30,6 @@ export function AnimationInitializer() {
 
   // This component doesn't render anything
   return null;
-}
+};
 
 export default AnimationInitializer; 

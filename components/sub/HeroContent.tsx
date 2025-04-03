@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { animateHero } from "@/utils/gsapAnimations";
 import Image from "next/image";
 import { gsap } from "gsap";
-import { staggerContainer, fadeIn, slideIn, textCharacterAnimation, characterVariant } from "@/utils/framerAnimations";
+import { slideInFromTop, fadeIn, staggerContainer, slideIn } from "@/utils/motion";
 
 interface HeroContentProps {
   isDarkMode?: boolean;
