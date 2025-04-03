@@ -443,9 +443,7 @@ export const animateProjects = () => {
       
       if (cardTitle) {
         gsap.to(cardTitle, {
-          background: "linear-gradient(to right, #9333EA, #3B82F6, #EF4444)",
-          backgroundClip: "text",
-          WebkitBackgroundClip: "text",
+          scale: 1.05,
           duration: 0.3
         });
       }
@@ -483,9 +481,7 @@ export const animateProjects = () => {
       
       if (cardTitle) {
         gsap.to(cardTitle, {
-          background: "",
-          backgroundClip: "",
-          WebkitBackgroundClip: "",
+          scale: 1,
           duration: 0.3
         });
       }

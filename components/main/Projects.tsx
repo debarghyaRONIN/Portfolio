@@ -243,8 +243,8 @@ const ProjectCard = ({ project, isDarkMode }: ProjectCardProps) => {
       >
         <h3 className={`text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${
           isDarkMode 
-            ? 'from-red-600 to-yellow-500 hover:from-purple-600 hover:via-blue-500 hover:to-red-500' 
-            : 'from-blue-600 to-blue-400 hover:from-purple-600 hover:via-blue-500 hover:to-red-500'
+            ? 'from-red-600 to-yellow-500' 
+            : 'from-blue-600 to-blue-400'
         } transition-all duration-500`}>
           {project.title}
         </h3>
