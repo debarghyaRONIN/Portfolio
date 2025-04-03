@@ -151,6 +151,26 @@ const ProjectCard = ({ project, isDarkMode }: ProjectCardProps) => {
       });
     });
 
+    // Ensure links inside the card work properly with the 3D effect
+    const links = card.querySelectorAll('a');
+    links.forEach(link => {
+      link.addEventListener('mouseenter', (e) => {
+        e.stopPropagation();
+        gsap.to(link, {
+          scale: 1.05,
+          duration: 0.3
+        });
+      });
+      
+      link.addEventListener('mouseleave', (e) => {
+        e.stopPropagation();
+        gsap.to(link, {
+          scale: 1,
+          duration: 0.3
+        });
+      });
+    });
+
     // Add event listeners
     card.addEventListener("mousemove", handleMouseMove);
     card.addEventListener("mouseleave", handleMouseLeave);
@@ -160,6 +180,10 @@ const ProjectCard = ({ project, isDarkMode }: ProjectCardProps) => {
       card.removeEventListener("mouseleave", handleMouseLeave);
       card.removeEventListener('mouseenter', () => {});
       card.removeEventListener('mouseleave', () => {});
+      links.forEach(link => {
+        link.removeEventListener('mouseenter', () => {});
+        link.removeEventListener('mouseleave', () => {});
+      });
     };
   }, [isDarkMode]);
 
@@ -169,13 +193,14 @@ const ProjectCard = ({ project, isDarkMode }: ProjectCardProps) => {
       className={`project-card rounded-lg border ${cardBgClasses} backdrop-blur-sm overflow-hidden shadow-lg transition-all duration-500 ${cardHoverClasses} perspective-container`}
       style={{
         transformStyle: 'preserve-3d',
-        perspective: '1000px'
+        perspective: '1000px',
+        position: 'relative'
       }}
     >
       {/* Glare overlay */}
       <div 
         ref={glareRef} 
-        className="absolute inset-0 z-30 pointer-events-none opacity-0"
+        className="absolute inset-0 z-10 pointer-events-none opacity-0"
         style={{ 
           borderRadius: 'inherit',
           mixBlendMode: 'overlay'
@@ -184,7 +209,7 @@ const ProjectCard = ({ project, isDarkMode }: ProjectCardProps) => {
       
       {/* Card edge highlight */}
       <div 
-        className="absolute inset-0 pointer-events-none z-20" 
+        className="absolute inset-0 pointer-events-none z-0" 
         style={{
           background: isDarkMode 
             ? 'linear-gradient(135deg, rgba(255,100,0,0.05) 0%, transparent 50%, rgba(255,100,0,0.05) 100%)' 
@@ -243,7 +268,7 @@ const ProjectCard = ({ project, isDarkMode }: ProjectCardProps) => {
           ))}
         </div>
         
-        <div className="pt-4">
+        <div className="pt-4 relative z-40">
           <a
             href={project.link}
             target="_blank"
@@ -252,7 +277,11 @@ const ProjectCard = ({ project, isDarkMode }: ProjectCardProps) => {
               isDarkMode
                 ? 'bg-gradient-to-r from-red-600 to-yellow-500 text-white hover:from-yellow-500 hover:to-red-600'
                 : 'bg-gradient-to-r from-blue-600 to-blue-400 text-white hover:from-blue-400 hover:to-blue-600'
-            } transition-all duration-300 transform hover:scale-105`}
+            } transition-all duration-300 transform hover:scale-105 relative z-40`}
+            style={{
+              transform: 'translateZ(20px)',
+              pointerEvents: 'auto'
+            }}
           >
             View Project
           </a>
