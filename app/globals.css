@@ -369,3 +369,124 @@ body {
 .card-tilt:hover .card-tilt-glare {
   opacity: 1;
 }
+
+/* Hardware acceleration classes for smoother animations */
+.animate-gpu {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.transform-gpu {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Optimize animations for reduced motion if user prefers */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Smooth scroll for the whole page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Add smooth transitions to all interactive elements */
+a, button, .card-hover, .button {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              box-shadow 0.3s ease,
+              background-color 0.3s ease,
+              color 0.3s ease,
+              border-color 0.3s ease;
+}
+
+/* Optimize keyframes animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px) translateZ(0);
+  }
+  50% {
+    transform: translateY(-10px) translateZ(0);
+  }
+  100% {
+    transform: translateY(0px) translateZ(0);
+  }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Add staggered float animations */
+.float-1 { animation-delay: 0s; }
+.float-2 { animation-delay: 0.3s; }
+.float-3 { animation-delay: 0.6s; }
+.float-4 { animation-delay: 0.9s; }
+
+/* Add smooth transition to skill icons */
+.skill-icon {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  will-change: transform;
+}
+
+.skill-icon:hover {
+  transform: scale(1.15) translateZ(0);
+}
+
+/* Better transition for sections */
+section {
+  transition: background-color 0.5s ease;
+  will-change: transform, opacity;
+}
+
+/* Page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s, transform 0.5s;
+}
+.page-transition-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+/* Optimize hover interactions */
+@media (hover: hover) {
+  .card-hover:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  }
+  
+  .button:hover {
+    transform: translateY(-3px);
+  }
+}
+
+/* Better responsive animations for mobile performance */
+@media (max-width: 768px) {
+  * {
+    animation-duration: 50% !important; /* Faster animations on mobile */
+  }
+  
+  .animate-gpu, .transform-gpu {
+    will-change: auto; /* Reduce GPU memory usage on mobile */
+  }
+}

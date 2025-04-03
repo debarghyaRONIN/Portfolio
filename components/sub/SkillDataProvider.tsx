@@ -1,9 +1,10 @@
 "use client"
 
-import React from 'react'
-import {motion} from 'framer-motion'
+import React, { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import Image from 'next/image';
+import { rotateIn } from '@/utils/framerAnimations';
 
 interface Props {
     src: string;
@@ -14,16 +15,53 @@ interface Props {
 }
 
 const SkillDataProvider = ({ src, width, height, index, isDarkMode = true} : Props) => {
+    const [isMounted, setIsMounted] = useState(false);
     const {ref, inView} = useInView({
-        triggerOnce: true
-    })
+        triggerOnce: true,
+        threshold: 0.2
+    });
 
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    // Enhanced animation variants
     const imageVariants = {
-        hidden: {opacity: 0},
-        visible: {opacity: 1}
-    }
-
-    const animationDelay = 0.3
+        hidden: {
+            opacity: 0,
+            y: 20,
+            scale: 0.8,
+            rotate: isDarkMode ? -10 : 10,
+        },
+        visible: {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            rotate: 0,
+            transition: {
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+                delay: index * 0.1, // shorter delay for more fluid appearance
+                duration: 0.6
+            }
+        },
+        hover: {
+            scale: 1.2,
+            rotate: isDarkMode ? 5 : -5,
+            transition: {
+                type: "spring",
+                stiffness: 400,
+                damping: 10
+            }
+        },
+        tap: {
+            scale: 0.9,
+            transition: {
+                duration: 0.1
+            }
+        }
+    };
     
     const wrapperClasses = isDarkMode 
         ? "" 
@@ -32,19 +70,19 @@ const SkillDataProvider = ({ src, width, height, index, isDarkMode = true} : Pro
     return (
         <motion.div
             ref={ref}
-            initial="hidden"
+            initial={isMounted ? "hidden" : false}
             variants={imageVariants}
-            animate={inView ? "visible" : "hidden"}
-            custom={index}
-            transition={{delay: index * animationDelay}}
-            className={`${wrapperClasses} transition-all duration-500`}
+            animate={inView && isMounted ? "visible" : "hidden"}
+            whileHover={isMounted ? "hover" : undefined}
+            whileTap={isMounted ? "tap" : undefined}
+            className={`${wrapperClasses} transition-all duration-500 skill-icon p-2`}
         >
             <Image
                 src={src}
                 width={width}
                 height={height}
                 alt='skill image'
-                className="transition-transform duration-300 hover:scale-110"
+                className="transition-transform duration-300"
             />
         </motion.div>
     )

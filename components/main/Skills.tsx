@@ -11,6 +11,8 @@ import React, { useState, useEffect } from "react";
 import { animateSkills } from "@/utils/gsapAnimations";
 import SkillDataProvider from "../sub/SkillDataProvider";
 import SkillText from "../sub/SkillText";
+import { motion } from "framer-motion";
+import { staggerContainer, fadeIn, cardVariants } from "@/utils/framerAnimations";
 
 const Skills = () => {
     const [isDarkMode, setIsDarkMode] = useState(true);
@@ -59,31 +61,74 @@ const Skills = () => {
     const titleClasses = isDarkMode
         ? "text-white"
         : "text-gray-800";
+        
+    // Staggered animation for the skill cards
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.2,
+                delayChildren: 0.3
+            }
+        }
+    };
 
     return (
-        <section
+        <motion.section
             id="skills"
             className="flex flex-col items-center justify-center gap-3 h-full relative overflow-hidden py-20 transition-colors duration-500"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={fadeIn}
         >
             {/* Background with gradient */}
             <div className="absolute inset-0 w-full h-full z-[1]">
                 <div className={`absolute inset-0 transition-colors duration-500 ${bgClasses}`}></div>
                 <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
-                <div className={`absolute inset-0 transition-colors duration-500 ${gradientClasses}`}></div>
+                <motion.div 
+                    className={`absolute inset-0 transition-colors duration-500 ${gradientClasses}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.8 }}
+                ></motion.div>
             </div>
 
             {/* Content Layer */}
             <div className="relative z-[2] w-full max-w-7xl mx-auto px-4">
-                <div className="skill-header">
+                <motion.div 
+                    className="skill-header"
+                    variants={fadeIn}
+                >
                     <SkillText isDarkMode={isDarkMode} />
-                </div>
+                </motion.div>
 
-                <div className="flex flex-col items-center gap-12 mt-12">
+                <motion.div 
+                    className="flex flex-col items-center gap-12 mt-12"
+                    variants={staggerContainer}
+                >
                     {/* Skill Categories */}
-                    <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <motion.div 
+                        className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                        variants={containerVariants}
+                    >
                         {/* Main Skills */}
-                        <div className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
-                            <h3 className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}>Core Technologies</h3>
+                        <motion.div 
+                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}
+                            variants={cardVariants}
+                            whileHover={{
+                                y: -10,
+                                boxShadow: "0px 10px 25px rgba(0,0,0,0.25)",
+                                transition: { duration: 0.3, ease: "easeOut" }
+                            }}
+                        >
+                            <motion.h3 
+                                className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}
+                                variants={fadeIn}
+                            >
+                                Core Technologies
+                            </motion.h3>
                             <div className="flex flex-wrap justify-center gap-4">
                                 {Skill_data.map((image: Skill, index: number) => (
                                     <SkillDataProvider
@@ -96,11 +141,24 @@ const Skills = () => {
                                     />
                                 ))}
                             </div>
-                        </div>
+                        </motion.div>
 
                         {/* Frontend Skills */}
-                        <div className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
-                            <h3 className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}>Frontend</h3>
+                        <motion.div 
+                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}
+                            variants={cardVariants}
+                            whileHover={{
+                                y: -10,
+                                boxShadow: "0px 10px 25px rgba(0,0,0,0.25)",
+                                transition: { duration: 0.3, ease: "easeOut" }
+                            }}
+                        >
+                            <motion.h3 
+                                className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}
+                                variants={fadeIn}
+                            >
+                                Frontend
+                            </motion.h3>
                             <div className="flex flex-wrap justify-center gap-4">
                                 {Frontend_skill.map((image: Skill, index: number) => (
                                     <SkillDataProvider
@@ -113,11 +171,24 @@ const Skills = () => {
                                     />
                                 ))}
                             </div>
-                        </div>
+                        </motion.div>
                         
                         {/* ML/AI Skills */}
-                        <div className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
-                            <h3 className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}>ML/AI</h3>
+                        <motion.div 
+                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}
+                            variants={cardVariants}
+                            whileHover={{
+                                y: -10,
+                                boxShadow: "0px 10px 25px rgba(0,0,0,0.25)",
+                                transition: { duration: 0.3, ease: "easeOut" }
+                            }}
+                        >
+                            <motion.h3 
+                                className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}
+                                variants={fadeIn}
+                            >
+                                ML/AI
+                            </motion.h3>
                             <div className="flex flex-wrap justify-center gap-4">
                                 {ML_AI_Skills.map((image: Skill, index: number) => (
                                     <SkillDataProvider
@@ -130,11 +201,24 @@ const Skills = () => {
                                     />
                                 ))}
                             </div>
-                        </div>
+                        </motion.div>
                         
                         {/* Backend Skills */}
-                        <div className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}>
-                            <h3 className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}>Backend</h3>
+                        <motion.div 
+                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}
+                            variants={cardVariants}
+                            whileHover={{
+                                y: -10,
+                                boxShadow: "0px 10px 25px rgba(0,0,0,0.25)",
+                                transition: { duration: 0.3, ease: "easeOut" }
+                            }}
+                        >
+                            <motion.h3 
+                                className={`text-xl font-semibold mb-4 text-center transition-colors duration-500 ${titleClasses}`}
+                                variants={fadeIn}
+                            >
+                                Backend
+                            </motion.h3>
                             <div className="flex flex-wrap justify-center gap-4">
                                 {Backend_skill.map((image: Skill, index: number) => (
                                     <SkillDataProvider
@@ -147,11 +231,11 @@ const Skills = () => {
                                     />
                                 ))}
                             </div>
-                        </div>
-                    </div>
-                </div>
+                        </motion.div>
+                    </motion.div>
+                </motion.div>
             </div>
-        </section>
+        </motion.section>
     );
 };
 

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { animateHero } from "@/utils/gsapAnimations";
 import Image from "next/image";
 import { gsap } from "gsap";
+import { staggerContainer, fadeIn, slideIn, textCharacterAnimation, characterVariant } from "@/utils/framerAnimations";
 
 interface HeroContentProps {
   isDarkMode?: boolean;
@@ -47,7 +48,7 @@ const HeroContent = ({ isDarkMode = true }: HeroContentProps) => {
       const relativeX = Math.max(0, Math.min(100, ((e.clientX - left) / width) * 100));
       const relativeY = Math.max(0, Math.min(100, ((e.clientY - top) / height) * 100));
       
-      // Apply rotation to the image (max 10 degrees)
+      // Apply rotation to the image (max 15 degrees)
       const rotateY = -percentX * 15;
       const rotateX = percentY * 15;
       
@@ -139,58 +140,94 @@ const HeroContent = ({ isDarkMode = true }: HeroContentProps) => {
   const headingGradient = isDarkMode 
     ? "from-red-800 to-yellow-400" 
     : "from-blue-600 to-blue-400";
+    
+  // Remove the split text animation
+  // const nameText = "Debarghya Saha";
+  // const nameLetters = nameText.split("");
 
   return (
     <motion.div
       ref={heroRef}
+      variants={staggerContainer}
       initial="hidden"
       animate="visible"
       className="flex flex-row items-center justify-center px-4 sm:px-10 md:px-20 mt-20 md:mt-32 w-full z-[20]"
     >
-      <div className="h-full w-full flex flex-col gap-5 justify-center m-auto text-start">
-        <div
+      <motion.div 
+        className="h-full w-full flex flex-col gap-5 justify-center m-auto text-start"
+      >
+        <motion.div
+          variants={slideIn("down", 0.1)}
           className="hero-welcome-box welcome-box py-[8px] px-[10px] border border-[#7042f88b] opacity-[0.9] max-w-[290px]"
         >
-          <h1 className="text-[14px] text-[#b49bff]">Machine Learning Engineer</h1>
-        </div>
+          <motion.h1 
+            className="text-[14px] text-[#b49bff]"
+            initial={{ opacity: 0 }}
+            animate={{ 
+              opacity: 1,
+              transition: { delay: 0.2, duration: 0.5 }
+            }}
+          >
+            Machine Learning Engineer
+          </motion.h1>
+        </motion.div>
 
-        <div
+        <motion.div
+          variants={fadeIn}
           className="hero-name flex flex-col gap-6 mt-4 text-5xl sm:text-6xl font-bold text-white max-w-[600px] w-auto h-auto"
         >
-          <span>
-            <span className={`text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} transition-colors duration-500`}>
-              Debarghya Saha
-            </span>
-          </span>
-        </div>
+          {/* Replace character animation with simple gradient text */}
+          <motion.h1 
+            className={`text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} transition-colors duration-500 leading-normal py-2`}
+          >
+            Debarghya Saha
+          </motion.h1>
+        </motion.div>
 
-        <div
+        <motion.div
+          variants={fadeIn}
           className="hero-description text-base sm:text-lg text-gray-300 my-5 max-w-[600px] text-left"
         >
           Data Science & MLOps Specialist crafting intelligent solutions that transform data into impact. Building enterprise-ready AI applications with a focus on scalability and performance.
-        </div>
+        </motion.div>
         
-        <div 
+        <motion.div 
+          variants={slideIn("up", 0.4)}
           className="hero-buttons flex flex-row gap-5"
         >
-          <a
+          <motion.a
             href="#about"
-            className="py-2 px-4 button-primary text-center text-white cursor-pointer rounded-lg max-w-[200px] hover:bg-gradient-to-r hover:from-red-700 hover:to-yellow-500 transition-all duration-300"
+            className="py-2 px-4 button button-primary text-center text-white cursor-pointer rounded-lg max-w-[200px] hover:bg-gradient-to-r hover:from-red-700 hover:to-yellow-500 transition-all duration-300"
+            whileHover={{ 
+              scale: 1.05, 
+              y: -5,
+              boxShadow: "0 10px 25px rgba(255, 100, 0, 0.3)",
+              transition: { duration: 0.2, ease: "easeOut" }
+            }}
+            whileTap={{ scale: 0.95 }}
           >
             Learn More
-          </a>
+          </motion.a>
           
-          <a
+          <motion.a
             href="#contact"
-            className="py-2 px-4 text-center border border-red-600 text-white cursor-pointer rounded-lg max-w-[200px] hover:bg-red-600/10 transition-all duration-300"
+            className="py-2 px-4 button text-center border border-red-600 text-white cursor-pointer rounded-lg max-w-[200px] hover:bg-red-600/10 transition-all duration-300"
+            whileHover={{ 
+              scale: 1.05, 
+              y: -5,
+              boxShadow: "0 10px 25px rgba(255, 100, 0, 0.2)",
+              transition: { duration: 0.2, ease: "easeOut" }
+            }}
+            whileTap={{ scale: 0.95 }}
           >
             Contact Me
-          </a>
-        </div>
-      </div>
+          </motion.a>
+        </motion.div>
+      </motion.div>
 
-      <div
+      <motion.div
         ref={imageRef}
+        variants={slideIn("right", 0.3)}
         className="hero-image w-full h-full hidden md:flex justify-center items-center perspective-container rounded-xl p-4 transition-all duration-500 overflow-hidden"
         style={{
           transformStyle: 'preserve-3d',
@@ -231,7 +268,7 @@ const HeroContent = ({ isDarkMode = true }: HeroContentProps) => {
             transform: 'translateZ(40px)'
           }}
         />
-      </div>
+      </motion.div>
     </motion.div>
   );
 };

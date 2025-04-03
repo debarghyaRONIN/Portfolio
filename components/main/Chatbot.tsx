@@ -136,13 +136,13 @@ const Chatbot = () => {
         animate={{ scale: 1 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => setIsOpen(true)}
+        onClick={() => setIsOpen(!isOpen)}
         className={`fixed bottom-6 right-6 p-4 rounded-full shadow-lg z-50 ${
           isDarkMode 
             ? 'bg-gradient-to-r from-red-600 to-yellow-500 text-white' 
             : 'bg-gradient-to-r from-blue-600 to-blue-400 text-white'
         }`}
-        aria-label="Open chat"
+        aria-label={isOpen ? "Close chat" : "Open chat"}
       >
         <ChatBubbleLeftIcon className="w-6 h-6" />
       </motion.button>
