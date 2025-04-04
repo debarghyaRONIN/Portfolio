@@ -7,7 +7,6 @@ import emailjs from '@emailjs/browser';
 const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState({
-    from_name: "",
     from_email: "",
     subject: "",
     message: ""
@@ -18,16 +17,33 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
     message?: string;
   }>({});
 
+  // Get EmailJS config values
+  const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
+  const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
+  const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
+
+  // Check if EmailJS is configured
+  const isEmailJSConfigured = !!(serviceId && templateId && publicKey);
+
   // Initialize EmailJS
   useEffect(() => {
+    // Log configuration status for debugging (will only show in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('EmailJS Configuration:', {
+        serviceId: serviceId ? 'Set' : 'Not Set',
+        templateId: templateId ? 'Set' : 'Not Set',
+        publicKey: publicKey ? 'Set' : 'Not Set',
+        isConfigured: isEmailJSConfigured
+      });
+    }
+
     // Initialize EmailJS with your public key
-    const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
     if (publicKey) {
       emailjs.init(publicKey);
     } else {
       console.error("EmailJS public key is missing");
     }
-  }, []);
+  }, [publicKey, serviceId, templateId, isEmailJSConfigured]);
 
   // Dynamic classes based on theme
   const inputBgClass = isDarkMode ? "bg-gray-900/60" : "bg-white/90";
@@ -49,7 +65,7 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
   // Simple mailto fallback if EmailJS fails
   const sendFallbackEmail = () => {
     const mailtoUrl = `mailto:debarghyasren@gmail.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
-      `From: ${formData.from_name || "No name provided"}\nEmail: ${formData.from_email}\n\n${formData.message}`
+      `From: ${formData.from_email}\n\n${formData.message}`
     )}`;
     window.open(mailtoUrl, '_blank');
   };
@@ -93,33 +109,44 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
     setFormStatus({});
 
     try {
-      // EmailJS service configuration from environment variables
-      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
-      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
-      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
-      
-      // Check if all required configuration is available
-      if (!serviceId || !templateId || !publicKey) {
-        console.error("Missing EmailJS configuration", { serviceId, templateId, publicKey });
-        throw new Error('EmailJS configuration is missing');
+      // Check if EmailJS is configured
+      if (!isEmailJSConfigured) {
+        console.error("EmailJS configuration is missing");
+        throw new Error('EmailJS configuration is missing. Please check your environment variables.');
       }
 
-      // Add manual template params to ensure correct mapping
-      const templateParams = {
-        from_name: formData.from_name || formData.from_email,
-        from_email: formData.from_email,
-        reply_to: formData.from_email,
-        subject: formData.subject,
-        message: formData.message
-      };
+      // Add hidden input fields to ensure EmailJS template receives all needed data
+      const hiddenFields = [
+        { name: 'from_name', value: formData.from_email },
+        { name: 'reply_to', value: formData.from_email }
+      ];
+      
+      // Temporarily append hidden fields for EmailJS template
+      for (const field of hiddenFields) {
+        if (!formRef.current.querySelector(`input[name="${field.name}"]`)) {
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.name = field.name;
+          hiddenInput.value = field.value;
+          formRef.current.appendChild(hiddenInput);
+        }
+      }
 
-      // Send using templateParams (more reliable for Vercel deployment)
-      const response = await emailjs.send(
-        serviceId,
-        templateId,
-        templateParams,
+      // Send directly using form reference (more reliable)
+      const response = await emailjs.sendForm(
+        serviceId!,
+        templateId!,
+        formRef.current,
         publicKey
       );
+      
+      // Remove temporary hidden fields
+      for (const field of hiddenFields) {
+        const hiddenInput = formRef.current.querySelector(`input[name="${field.name}"][type="hidden"]`);
+        if (hiddenInput) {
+          formRef.current.removeChild(hiddenInput);
+        }
+      }
       
       if (response.status === 200) {
         setFormStatus({
@@ -129,7 +156,6 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
         
         // Reset form
         setFormData({
-          from_name: "",
           from_email: "",
           subject: "",
           message: ""
@@ -161,26 +187,6 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
       </h3>
       
       <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col space-y-4">
-        <div>
-          <label 
-            htmlFor="from_name" 
-            className={`block text-sm font-medium mb-1 ${inputTextClass} transition-colors duration-500`}
-          >
-            Your Name
-          </label>
-          <input
-            type="text"
-            id="from_name"
-            name="from_name"
-            value={formData.from_name}
-            onChange={handleChange}
-            className={`w-full px-3 py-2 rounded-md ${inputBgClass} ${inputBorderClass} ${inputTextClass} border focus:ring-2 focus:ring-opacity-50 ${
-              isDarkMode ? "focus:ring-red-500" : "focus:ring-blue-500"
-            } transition-all duration-300`}
-            placeholder="Your Name (Optional)"
-          />
-        </div>
-        
         <div>
           <label 
             htmlFor="from_email" 
@@ -260,7 +266,7 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
         </button>
         
         {/* Alternative email method */}
-        {formStatus.success === false && (
+        {(formStatus.success === false || !isEmailJSConfigured) && (
           <button
             type="button"
             onClick={sendFallbackEmail}
