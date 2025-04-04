@@ -7,6 +7,7 @@ import emailjs from '@emailjs/browser';
 const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState({
+    from_name: "",
     from_email: "",
     subject: "",
     message: ""
@@ -48,7 +49,7 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
   // Simple mailto fallback if EmailJS fails
   const sendFallbackEmail = () => {
     const mailtoUrl = `mailto:debarghyasren@gmail.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
-      `From: ${formData.from_email}\n\n${formData.message}`
+      `From: ${formData.from_name || "No name provided"}\nEmail: ${formData.from_email}\n\n${formData.message}`
     )}`;
     window.open(mailtoUrl, '_blank');
   };
@@ -95,19 +96,29 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
       // EmailJS service configuration from environment variables
       const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
       const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
+      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
       
       // Check if all required configuration is available
-      if (!serviceId || !templateId) {
-        console.error("Missing EmailJS configuration");
+      if (!serviceId || !templateId || !publicKey) {
+        console.error("Missing EmailJS configuration", { serviceId, templateId, publicKey });
         throw new Error('EmailJS configuration is missing');
       }
 
-      // Send directly using form reference (more reliable)
-      const response = await emailjs.sendForm(
+      // Add manual template params to ensure correct mapping
+      const templateParams = {
+        from_name: formData.from_name || formData.from_email,
+        from_email: formData.from_email,
+        reply_to: formData.from_email,
+        subject: formData.subject,
+        message: formData.message
+      };
+
+      // Send using templateParams (more reliable for Vercel deployment)
+      const response = await emailjs.send(
         serviceId,
         templateId,
-        formRef.current,
-        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
+        templateParams,
+        publicKey
       );
       
       if (response.status === 200) {
@@ -118,6 +129,7 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
         
         // Reset form
         setFormData({
+          from_name: "",
           from_email: "",
           subject: "",
           message: ""
@@ -149,6 +161,26 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
       </h3>
       
       <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col space-y-4">
+        <div>
+          <label 
+            htmlFor="from_name" 
+            className={`block text-sm font-medium mb-1 ${inputTextClass} transition-colors duration-500`}
+          >
+            Your Name
+          </label>
+          <input
+            type="text"
+            id="from_name"
+            name="from_name"
+            value={formData.from_name}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 rounded-md ${inputBgClass} ${inputBorderClass} ${inputTextClass} border focus:ring-2 focus:ring-opacity-50 ${
+              isDarkMode ? "focus:ring-red-500" : "focus:ring-blue-500"
+            } transition-all duration-300`}
+            placeholder="Your Name (Optional)"
+          />
+        </div>
+        
         <div>
           <label 
             htmlFor="from_email" 
