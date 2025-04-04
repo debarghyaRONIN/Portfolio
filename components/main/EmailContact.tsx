@@ -7,7 +7,7 @@ import emailjs from '@emailjs/browser';
 const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState({
-    from_name: "",
+    from_email: "",
     subject: "",
     message: ""
   });
@@ -44,10 +44,11 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
 
   // Simple mailto fallback if EmailJS fails
   const sendFallbackEmail = () => {
-    const mailtoUrl = `mailto:debarghyasren@gmail.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
-      `From: ${formData.from_name}\n\n${formData.message}`
+    // Use Gmail specific URL
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=debarghyasren@gmail.com&su=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
+      `From: ${formData.from_email}\n\n${formData.message}`
     )}`;
-    window.open(mailtoUrl, '_blank');
+    window.open(gmailUrl, '_blank');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,57 +63,52 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
       // EmailJS service configuration from environment variables
       const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
       const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
+      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
       
       // Check if all required configuration is available
-      if (!serviceId || !templateId) {
+      if (!serviceId || !templateId || !publicKey) {
         console.error("Missing EmailJS configuration");
         throw new Error('EmailJS configuration is missing');
       }
 
-      // Prepare template parameters
+      // Use standard EmailJS template variables
       const templateParams = {
-        from_name: formData.from_name,
-        reply_to: formData.from_name,
+        from_name: formData.from_email, // sender's email as name
+        from_email: formData.from_email, // sender's email
+        reply_to: formData.from_email, // reply-to address
         subject: formData.subject,
-        message: formData.message,
-        to_name: "Debarghya"
+        message: formData.message
       };
-
-      // Log parameters for debugging (remove in production)
-      console.log("Sending with params:", {
+      
+      const response = await emailjs.send(
         serviceId,
         templateId,
-        templateParams,
-        publicKeyPresent: !!process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
-      });
-
-      // Try directly with sendForm which has better success rate
-      const response = await emailjs.sendForm(
-        serviceId,
-        templateId,
-        formRef.current
+        templateParams
       );
-
-      console.log("EmailJS response:", response);
-
+      
       if (response.status === 200) {
-        // On success
         setFormStatus({
           success: true,
           message: "Email sent successfully! I'll get back to you soon."
         });
         
-        // Reset form data
+        // Reset form
         setFormData({
-          from_name: "",
+          from_email: "",
           subject: "",
           message: ""
         });
       } else {
-        throw new Error(`Failed to send email: ${response.text}`);
+        throw new Error(`Failed with status: ${response.status}`);
       }
-    } catch (error) {
-      console.error('Email error:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : typeof error === 'object' && error !== null && 'text' in error
+          ? (error as {text: string}).text
+          : 'Unknown error';
+          
+      console.error('Email sending error:', errorMessage);
       setFormStatus({
         success: false,
         message: "Something went wrong with direct sending. Try the alternative method below."
@@ -131,16 +127,16 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
       <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col space-y-4">
         <div>
           <label 
-            htmlFor="from_name" 
+            htmlFor="from_email" 
             className={`block text-sm font-medium mb-1 ${inputTextClass} transition-colors duration-500`}
           >
             Your Email
           </label>
           <input
             type="email"
-            id="from_name"
-            name="from_name"
-            value={formData.from_name}
+            id="from_email"
+            name="from_email"
+            value={formData.from_email}
             onChange={handleChange}
             required
             className={`w-full px-3 py-2 rounded-md ${inputBgClass} ${inputBorderClass} ${inputTextClass} border focus:ring-2 focus:ring-opacity-50 ${
@@ -148,8 +144,6 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
             } transition-all duration-300`}
             placeholder="your.email@example.com"
           />
-          {/* Add a hidden field for reply_to that matches from_name */}
-          <input type="hidden" name="reply_to" value={formData.from_name} />
         </div>
         
         <div>
@@ -209,7 +203,7 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
           )}
         </button>
         
-        {/* Add a direct mailto button as fallback */}
+        {/* Add a direct Gmail button as fallback */}
         {formStatus.success === false && (
           <button
             type="button"
@@ -218,7 +212,7 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
               isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-blue-600"
             }`}
           >
-            <span>Send via Email Client</span>
+            <span>Send via Gmail</span>
           </button>
         )}
         
@@ -233,8 +227,6 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
             {formStatus.message}
           </div>
         )}
-        
-        <input type="hidden" name="to_name" value="Debarghya" />
       </form>
     </div>
   );
