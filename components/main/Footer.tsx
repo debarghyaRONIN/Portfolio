@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { EnvelopeIcon } from "@heroicons/react/24/outline";
+import EmailContact from "./EmailContact";
 
 const Footer = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -40,9 +41,9 @@ const Footer = () => {
   const footerTextClass = isDarkMode ? "text-gray-400" : "text-gray-500";
 
   return (
-    <footer className={`w-full ${bgClass} ${textClass} border-t ${borderClass} transition-colors duration-500`} id="contact">
+    <footer className={`w-full ${bgClass} ${textClass} border-t ${borderClass} transition-colors duration-500 relative z-10`} id="contact">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Contact Section */}
           <div className="flex flex-col">
             <h3 className={`text-lg font-semibold ${headingClass} mb-4 pb-2 border-b ${borderClass} transition-colors duration-500`}>Contact</h3>
@@ -89,6 +90,11 @@ const Footer = () => {
                 <span>LinkedIn</span>
               </a>
             </div>
+          </div>
+          
+          {/* Email Contact Form */}
+          <div className="flex flex-col">
+            <EmailContact isDarkMode={isDarkMode} />
           </div>
         </div>
         

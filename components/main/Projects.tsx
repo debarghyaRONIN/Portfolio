@@ -382,7 +382,7 @@ const Projects = () => {
       ref={projectsRef}
       className={`${bgClasses} relative py-20 transition-colors duration-500`}
     >
-      <div className="absolute inset-0 z-0 transition-colors duration-500">
+      <div className="absolute inset-0 z-[-1] transition-colors duration-500">
         <div className={`absolute inset-0 ${gradientClasses}`}></div>
         <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
       </div>

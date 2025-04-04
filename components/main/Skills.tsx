@@ -84,7 +84,7 @@ const Skills = () => {
             variants={fadeIn}
         >
             {/* Background with gradient */}
-            <div className="absolute inset-0 w-full h-full z-[1]">
+            <div className="absolute inset-0 w-full h-full z-[-1]">
                 <div className={`absolute inset-0 transition-colors duration-500 ${bgClasses}`}></div>
                 <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
                 <motion.div 
