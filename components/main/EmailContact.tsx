@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import emailjs from '@emailjs/browser';
 
 const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
+  const formRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState({
-    senderEmail: "",
+    from_name: "",
     subject: "",
     message: ""
   });
@@ -14,6 +16,14 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
     success?: boolean;
     message?: string;
   }>({});
+
+  // Initialize EmailJS
+  useEffect(() => {
+    // Initialize EmailJS with your public key
+    if (process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY) {
+      emailjs.init(process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY);
+    }
+  }, []);
 
   // Dynamic classes based on theme
   const inputBgClass = isDarkMode ? "bg-gray-900/60" : "bg-white/90";
@@ -32,51 +42,80 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
     });
   };
 
+  // Simple mailto fallback if EmailJS fails
+  const sendFallbackEmail = () => {
+    const mailtoUrl = `mailto:debarghyasren@gmail.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
+      `From: ${formData.from_name}\n\n${formData.message}`
+    )}`;
+    window.open(mailtoUrl, '_blank');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formRef.current) return;
+    
     setIsSubmitting(true);
     setFormStatus({});
 
     try {
-      // Send to our API endpoint
-      const response = await fetch('/api/email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
+      // EmailJS service configuration from environment variables
+      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
+      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
       
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send email');
+      // Check if all required configuration is available
+      if (!serviceId || !templateId) {
+        console.error("Missing EmailJS configuration");
+        throw new Error('EmailJS configuration is missing');
       }
 
-      // Fallback for development testing - open mailto link
-      if (process.env.NODE_ENV === 'development') {
-        const mailtoUrl = `mailto:debarghyasren@gmail.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
-          `From: ${formData.senderEmail}\n\n${formData.message}`
-        )}`;
-        window.open(mailtoUrl, '_blank');
+      // Prepare template parameters
+      const templateParams = {
+        from_name: formData.from_name,
+        reply_to: formData.from_name,
+        subject: formData.subject,
+        message: formData.message,
+        to_name: "Debarghya"
+      };
+
+      // Log parameters for debugging (remove in production)
+      console.log("Sending with params:", {
+        serviceId,
+        templateId,
+        templateParams,
+        publicKeyPresent: !!process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
+      });
+
+      // Try directly with sendForm which has better success rate
+      const response = await emailjs.sendForm(
+        serviceId,
+        templateId,
+        formRef.current
+      );
+
+      console.log("EmailJS response:", response);
+
+      if (response.status === 200) {
+        // On success
+        setFormStatus({
+          success: true,
+          message: "Email sent successfully! I'll get back to you soon."
+        });
+        
+        // Reset form data
+        setFormData({
+          from_name: "",
+          subject: "",
+          message: ""
+        });
+      } else {
+        throw new Error(`Failed to send email: ${response.text}`);
       }
-      
-      // On success
-      setFormStatus({
-        success: true,
-        message: data.message || "Email sent successfully!"
-      });
-      
-      // Reset form data
-      setFormData({
-        senderEmail: "",
-        subject: "",
-        message: ""
-      });
     } catch (error) {
+      console.error('Email error:', error);
       setFormStatus({
         success: false,
-        message: error instanceof Error ? error.message : "Something went wrong. Please try again or contact me directly."
+        message: "Something went wrong with direct sending. Try the alternative method below."
       });
     } finally {
       setIsSubmitting(false);
@@ -89,19 +128,19 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
         Send Me an Email
       </h3>
       
-      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+      <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col space-y-4">
         <div>
           <label 
-            htmlFor="senderEmail" 
+            htmlFor="from_name" 
             className={`block text-sm font-medium mb-1 ${inputTextClass} transition-colors duration-500`}
           >
             Your Email
           </label>
           <input
             type="email"
-            id="senderEmail"
-            name="senderEmail"
-            value={formData.senderEmail}
+            id="from_name"
+            name="from_name"
+            value={formData.from_name}
             onChange={handleChange}
             required
             className={`w-full px-3 py-2 rounded-md ${inputBgClass} ${inputBorderClass} ${inputTextClass} border focus:ring-2 focus:ring-opacity-50 ${
@@ -109,6 +148,8 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
             } transition-all duration-300`}
             placeholder="your.email@example.com"
           />
+          {/* Add a hidden field for reply_to that matches from_name */}
+          <input type="hidden" name="reply_to" value={formData.from_name} />
         </div>
         
         <div>
@@ -168,6 +209,19 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
           )}
         </button>
         
+        {/* Add a direct mailto button as fallback */}
+        {formStatus.success === false && (
+          <button
+            type="button"
+            onClick={sendFallbackEmail}
+            className={`mt-2 border border-current px-4 py-2 rounded-md flex items-center justify-center space-x-2 transition-all duration-300 ${
+              isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-blue-600"
+            }`}
+          >
+            <span>Send via Email Client</span>
+          </button>
+        )}
+        
         {formStatus.message && (
           <div 
             className={`mt-2 text-sm px-3 py-2 rounded ${
@@ -179,6 +233,8 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
             {formStatus.message}
           </div>
         )}
+        
+        <input type="hidden" name="to_name" value="Debarghya" />
       </form>
     </div>
   );
