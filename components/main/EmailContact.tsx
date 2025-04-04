@@ -20,8 +20,11 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
   // Initialize EmailJS
   useEffect(() => {
     // Initialize EmailJS with your public key
-    if (process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY) {
-      emailjs.init(process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY);
+    const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
+    if (publicKey) {
+      emailjs.init(publicKey);
+    } else {
+      console.error("EmailJS public key is missing");
     }
   }, []);
 
@@ -44,17 +47,46 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
 
   // Simple mailto fallback if EmailJS fails
   const sendFallbackEmail = () => {
-    // Use Gmail specific URL
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=debarghyasren@gmail.com&su=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
+    const mailtoUrl = `mailto:debarghyasren@gmail.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
       `From: ${formData.from_email}\n\n${formData.message}`
     )}`;
-    window.open(gmailUrl, '_blank');
+    window.open(mailtoUrl, '_blank');
+  };
+
+  const validateEmail = (email: string): boolean => {
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formRef.current) return;
+    
+    // Validate form fields
+    if (!validateEmail(formData.from_email)) {
+      setFormStatus({
+        success: false,
+        message: "Please enter a valid email address."
+      });
+      return;
+    }
+
+    if (!formData.subject.trim()) {
+      setFormStatus({
+        success: false,
+        message: "Please enter a subject."
+      });
+      return;
+    }
+
+    if (!formData.message.trim()) {
+      setFormStatus({
+        success: false,
+        message: "Please enter a message."
+      });
+      return;
+    }
     
     setIsSubmitting(true);
     setFormStatus({});
@@ -63,27 +95,19 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
       // EmailJS service configuration from environment variables
       const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
       const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
-      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
       
       // Check if all required configuration is available
-      if (!serviceId || !templateId || !publicKey) {
+      if (!serviceId || !templateId) {
         console.error("Missing EmailJS configuration");
         throw new Error('EmailJS configuration is missing');
       }
 
-      // Use standard EmailJS template variables
-      const templateParams = {
-        from_name: formData.from_email, // sender's email as name
-        from_email: formData.from_email, // sender's email
-        reply_to: formData.from_email, // reply-to address
-        subject: formData.subject,
-        message: formData.message
-      };
-      
-      const response = await emailjs.send(
+      // Send directly using form reference (more reliable)
+      const response = await emailjs.sendForm(
         serviceId,
         templateId,
-        templateParams
+        formRef.current,
+        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
       );
       
       if (response.status === 200) {
@@ -203,7 +227,7 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
           )}
         </button>
         
-        {/* Add a direct Gmail button as fallback */}
+        {/* Alternative email method */}
         {formStatus.success === false && (
           <button
             type="button"
@@ -212,7 +236,7 @@ const EmailContact = ({ isDarkMode }: { isDarkMode: boolean }) => {
               isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-blue-600"
             }`}
           >
-            <span>Send via Gmail</span>
+            <span>Send via Default Email Client</span>
           </button>
         )}
         
