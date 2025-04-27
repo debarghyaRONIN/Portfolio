@@ -19,8 +19,9 @@ function calculateAge(birthDate: Date): number {
 
 // Function to handle specific questions without using the external API
 function handleSpecificQuestions(message: string): string | null {
-  // Convert message to lowercase for case-insensitive matching
   const lowerMessage = message.toLowerCase();
+  
+  // Keep the specific handlers for well-known information
   
   // Handle email-related queries
   if (
@@ -33,17 +34,21 @@ function handleSpecificQuestions(message: string): string | null {
     return "My email address is debarghyasren@gmail.com. Feel free to reach out anytime!";
   }
   
-  // Handle birthday-related queries
+  // Handle age and birthday queries
   if (
+    lowerMessage.includes('age') ||
+    lowerMessage.includes('how old') ||
     lowerMessage.includes('birthday') ||
     lowerMessage.includes('birth date') ||
     lowerMessage.includes('born on') ||
     lowerMessage.includes('date of birth')
   ) {
-    return "My birthday is on January 22nd, 2004.";
+    const birthDate = new Date(2004, 1, 22);
+    const age = calculateAge(birthDate);
+    return `I am ${age} years old. I was born on January 22nd, 2004.`;
   }
-  
-  // Handle birthplace-related queries
+
+  // Handle birthplace queries
   if (
     lowerMessage.includes('where were you born') ||
     lowerMessage.includes('birth place') ||
@@ -55,33 +60,40 @@ function handleSpecificQuestions(message: string): string | null {
   ) {
     return "I was born in Tripura, Agartala.";
   }
-  
+
   // Handle age-related queries
   if (
     lowerMessage.includes('age') ||
     lowerMessage.includes('how old') ||
     lowerMessage.includes('years old')
   ) {
-    const birthDate = new Date(2004, 0, 22); // January 22, 2004
+    const birthDate = new Date(2004, 1, 22); // January 22, 2004
     const age = calculateAge(birthDate);
     return `I am ${age} years old. I was born on January 22nd, 2004.`;
   }
-  
-  // Detect personal questions that we don't have specific answers for
-  const personalQuestionPatterns = [
-    'your family', 'your parents', 'your siblings', 'your sister', 'your brother',
-    'your hobby', 'your hobbies', 'you like to do', 'your favorite', 'your favourite',
-    'your girlfriend', 'your boyfriend', 'your partner', 'are you married', 'relationship status',
-    'your address', 'where do you live', 'your location', 'your hometown', 'your city',
-    'your school', 'your college', 'your university', 'your education'
-  ];
-  
-  // Check if message contains any personal question patterns
-  if (personalQuestionPatterns.some(pattern => lowerMessage.includes(pattern))) {
-    return "I don't know. The real Debarghya didn't say anything about that to me.";
+
+  // Handle professional background queries
+  if (
+    lowerMessage.includes('work') ||
+    lowerMessage.includes('job') ||
+    lowerMessage.includes('profession') ||
+    lowerMessage.includes('background')
+  ) {
+    return "I'm an Ex-3D Artist Freelancer who transitioned into MLOps and Machine Learning Engineering. I specialize in developing and deploying machine learning solutions with a focus on efficient operations and scalable systems.";
   }
-  
-  // Return null if no specific answer is found
+
+  // Handle skills and expertise queries
+  if (
+    lowerMessage.includes('skill') ||
+    lowerMessage.includes('expertise') ||
+    lowerMessage.includes('programming') ||
+    lowerMessage.includes('technology') ||
+    lowerMessage.includes('tech stack')
+  ) {
+    return "My technical skills include: Programming (Python, C++, TypeScript), ML Frameworks (TensorFlow, PyTorch, Scikit-Learn), DevOps (GitLab, Docker, Kubernetes), Backend Development (Flask, FastAPI, Node.js), and Cloud Platforms (Google Cloud). I'm also experienced with tools like Jupyter, MLflow, and Hugging Face.";
+  }
+
+  // Return null to let the Groq API handle all other queries
   return null;
 }
 
@@ -100,26 +112,22 @@ export async function POST(request: NextRequest) {
     if (!messages.length) {
       messages.push({
         role: "system",
-        content: `You are a chatbot that represents Debarghya, the creator of this portfolio. Respond to all questions as if you were me.
+        content: `You are a helpful and knowledgeable AI assistant that can answer both personal questions about Debarghya and general questions about any topic.
 
-ABOUT ME:
-- Personal information: I was born on January 22nd, 2004 in Tripura, Agartala. When asked about my age, calculate it based on my birth date.
-
+For questions about Debarghya:
+- Personal information: Born on January 22nd, 2004 in Tripura, Agartala.
 - Professional background: Ex 3d Artist Freelancer, MLOPS and Machine Learning Engineer 
-B.Tech, Computer Science & Business Systems, Meghnad Saha Institute of Technology 2022–2026 UG Degree
-CBSE, Sudhir Memorial Institute 2020–2022 12th Grade
-WBBSE, Calcutta Airport English High School 2007–2020 Nursery-10th Grade
+- Education: B.Tech in Computer Science & Business Systems at Meghnad Saha Institute of Technology (2022-2026)
+- Skills: Python, C++, TypeScript, ML Frameworks, DevOps, Cloud platforms
+- Contact: debarghyasren@gmail.com
 
-- Skills and expertise and knowledge area: Programming: Python, C++, TypeScript
-ML Frameworks: TensorFlow, PyTorch, Scikit-Learn, OpenCV, Stable-Baselines3
-DevOps & CI/CD: GitLab Pipelines, Docker, Kubernetes, Terraform, Linux
-Backend Development: Flask, FastAPI, Node.js, MongoDB, PostgreSQL, Django
-Cloud Platforms: Google Cloud (Vertex AI, BigQuery)
-Tools: Jupyter, Postman, MLflow, Hugging Face, Unsloth
+For general questions:
+- Provide helpful, accurate, and informative responses based on your knowledge
+- Be concise but thorough
+- If you're not sure about something, be honest about it
+- Draw from your broad knowledge base to help users with any topic they ask about
 
-- Contact Information: My email address is debarghyasren@gmail.com. When someone asks for my email, always provide this exact address.
-
-IMPORTANT: If someone asks about something not specifically mentioned in the above information, do NOT make up information or guess. Simply respond with "I don't know. The real Debarghya didn't say anything about that to me." This is critical to maintain authenticity.`
+Maintain a friendly and professional tone throughout the conversation.`
       });
     }
 
@@ -128,11 +136,11 @@ IMPORTANT: If someone asks about something not specifically mentioned in the abo
 
     let response;
     
-    // If we have a direct response, use it instead of calling the external API
+    // If we have a direct response for personal questions, use it
     if (directResponse) {
       response = directResponse;
     } else {
-      // Call Groq API directly
+      // Call Groq API for general questions or when we don't have a direct response
       const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -142,7 +150,7 @@ IMPORTANT: If someone asks about something not specifically mentioned in the abo
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: messages,
-          temperature: 1,
+          temperature: 0.7, // Slightly reduced for more focused responses
           max_tokens: 1024,
           top_p: 1,
         }),
@@ -179,4 +187,4 @@ IMPORTANT: If someone asks about something not specifically mentioned in the abo
       { status: 500 }
     );
   }
-} 
+}
