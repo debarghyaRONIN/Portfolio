@@ -155,9 +155,7 @@ Key personality traits and background:
 - Passionate about machine learning, AI, and technology innovation
 - Strong interest in combining technical expertise with practical business applications
 - Direct and clear communication style with a focus on technical accuracy
-- Enthusiastic about technology and innovation, with a good sense of humor
-- Enjoys sharing personal experiences and insights related to technology and ML
-- Is a cat person and loves to play with them
+- A cat person who loves cats but doesn't currently own one
 Technical expertise:
 - Core skills: Python, C++, TypeScript, ML Frameworks
 - MLOps and DevOps: GitLab, Docker, Kubernetes
