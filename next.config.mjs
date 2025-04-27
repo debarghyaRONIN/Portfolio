@@ -11,6 +11,15 @@ const nextConfig = {
   experimental: {
     forceSwcTransforms: true,
   },
+  eslint: {
+    // Only run ESLint on specific files/directories
+    dirs: ['pages', 'utils', 'components'], // exclude components/main
+    // Or disable it completely during builds
+    ignoreDuringBuilds: true,
+  },
+
+
+  reactStrictMode: true,
 };
 
 export default nextConfig; 

@@ -33,51 +33,86 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Don't update active section if we're in the middle of a programmatic scroll
       if (isScrolling) return;
       
-      // Determine active section based on scroll position
-      const sections = navItems.map(item => item.href.substring(1))
-        .filter(section => section !== "achievements"); // Don't include achievements in automatic detection
+      const sections = navItems.map(item => item.href.substring(1));
+      const viewportHeight = window.innerHeight;
+      const scrollPosition = window.scrollY;
+      const documentHeight = document.documentElement.scrollHeight;
       
-      const currentSection = sections.find(section => {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          return rect.top <= 150 && rect.bottom >= 50;
+      // Check if we're near the bottom of the page
+      const isNearBottom = (window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100;
+      
+      if (isNearBottom) {
+        // If we're near the bottom, automatically set contact as active
+        if (activeSection !== 'contact') {
+          // Remove previous highlight
+          gsap.to(`.nav-item-${activeSection}`, {
+            duration: 0.3,
+            scale: 1,
+            fontWeight: "normal",
+            ease: "power2.out"
+          });
+          
+          setActiveSection('contact');
+          
+          // Add highlight to contact section
+          gsap.to('.nav-item-contact', {
+            duration: 0.3,
+            scale: 1.05,
+            fontWeight: "bold",
+            ease: "power2.out"
+          });
         }
-        return false;
-      });
-      
-      // Special case for achievements section - if it's active, don't change it based on scroll
-      if (activeSection === "achievements" && !currentSection) {
         return;
       }
       
-      if (currentSection && currentSection !== activeSection) {
-        // Use requestAnimationFrame to ensure smoother UI updates
-        requestAnimationFrame(() => {
-          // Ensure we don't set highlights multiple times in rapid succession
-          gsap.set(`.nav-item-${activeSection}`, {
-            scale: 1,
-            fontWeight: "normal"
-          });
-          
-          setActiveSection(currentSection);
-          
-          gsap.set(`.nav-item-${currentSection}`, {
-            scale: 1.05,
-            fontWeight: "bold"
-          });
+      // Find the section closest to the viewport center
+      let nearestSection = null;
+      let minDistance = Infinity;
+      
+      sections.forEach(section => {
+        const element = document.getElementById(section);
+        if (!element) return;
+        
+        const rect = element.getBoundingClientRect();
+        const sectionCenter = rect.top + rect.height / 2;
+        const viewportCenter = viewportHeight / 2;
+        const distance = Math.abs(sectionCenter - viewportCenter);
+        
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestSection = section;
+        }
+      });
+      
+      if (nearestSection && nearestSection !== activeSection) {
+        // Remove previous highlight
+        gsap.to(`.nav-item-${activeSection}`, {
+          duration: 0.3,
+          scale: 1,
+          fontWeight: "normal",
+          ease: "power2.out"
+        });
+        
+        // Set new active section
+        setActiveSection(nearestSection);
+        
+        // Add highlight to new section
+        gsap.to(`.nav-item-${nearestSection}`, {
+          duration: 0.3,
+          scale: 1.05,
+          fontWeight: "bold",
+          ease: "power2.out"
         });
       }
     };
     
-    // Use a throttled scroll event listener for better performance
+    // Efficient scroll handling with requestAnimationFrame
     let ticking = false;
     const scrollListener = () => {
       if (!ticking) {
-        window.requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
           handleScroll();
           ticking = false;
         });
@@ -85,8 +120,7 @@ const Navbar = () => {
       }
     };
     
-    window.addEventListener("scroll", scrollListener);
-    
+    window.addEventListener("scroll", scrollListener, { passive: true });
     return () => window.removeEventListener("scroll", scrollListener);
   }, [activeSection, isScrolling, navItems]);
 
@@ -146,79 +180,48 @@ const Navbar = () => {
     });
   }, [isDarkMode]);
 
-  // Create a debounced version of scrollToSection
+  // Improved scroll to section function
   const debouncedScrollToSection = useCallback((sectionId: string) => {
-    setIsOpen(false); // Close mobile menu
+    setIsOpen(false);
     const targetSection = document.getElementById(sectionId);
     
-    // Always update active state for achievements even if there's an issue with the section element
-    if (sectionId === "achievements") {
-      setActiveSection(sectionId);
-      gsap.set(`.nav-item-${activeSection}`, {
-        scale: 1,
-        fontWeight: "normal"
-      });
-      
-      gsap.set(`.nav-item-${sectionId}`, {
-        scale: 1.05,
-        fontWeight: "bold"
-      });
-    }
-    
     if (targetSection) {
-      // Store the current scroll position before scrolling
-      previousScrollPosition.current = window.scrollY;
-      
-      // Set scrolling state to prevent active section updates during animation
       setIsScrolling(true);
       
-      try {
-        // Update active menu item immediately for better UX
-        setActiveSection(sectionId);
-        
-        // Update highlighting with requestAnimationFrame for better performance
-        requestAnimationFrame(() => {
-          // Don't animate the old button, only set the new one
-          gsap.set(`.nav-item-${activeSection}`, {
-            scale: 1,
-            fontWeight: "normal"
-          });
-          
-          gsap.set(`.nav-item-${sectionId}`, {
-            scale: 1.05,
-            fontWeight: "bold"
-          });
-        });
-        
-        // Use GSAP for smooth scrolling animation
-        gsap.to(window, {
-          duration: 0.5, // Slightly longer duration for smoother scrolling 
-          scrollTo: {
-            y: targetSection,
-            offsetY: 70, // Account for navbar height
-            autoKill: false,
-          },
-          ease: "power2.out", // Changed to power2.out for smoother scroll
-          onComplete: () => {
-            // Add a small delay before disabling scrolling state to prevent immediate recalculation
-            setTimeout(() => {
-              setIsScrolling(false);
-            }, 200);
-          }
-        });
-      } catch {
-        // Fallback to native smooth scrolling if GSAP ScrollToPlugin fails
-        const yOffset = -70; // navbar height offset
-        const y = targetSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        
-        // Use instant scroll
-        window.scrollTo({
-          top: y,
-          behavior: 'auto'
-        });
-        
-        setIsScrolling(false);
-      }
+      // Update active section immediately for better UX
+      setActiveSection(sectionId);
+      
+      // Remove highlight from current section
+      gsap.to(`.nav-item-${activeSection}`, {
+        duration: 0.3,
+        scale: 1,
+        fontWeight: "normal",
+        ease: "power2.out"
+      });
+      
+      // Add highlight to new section
+      gsap.to(`.nav-item-${sectionId}`, {
+        duration: 0.3,
+        scale: 1.05,
+        fontWeight: "bold",
+        ease: "power2.out"
+      });
+      
+      // Smooth scroll animation
+      gsap.to(window, {
+        duration: 0.8,
+        scrollTo: {
+          y: targetSection,
+          offsetY: 70,
+          autoKill: true
+        },
+        ease: "power4.inOut",
+        onComplete: () => {
+          setTimeout(() => {
+            setIsScrolling(false);
+          }, 100);
+        }
+      });
     }
   }, [activeSection, setIsScrolling, setActiveSection]);
 
