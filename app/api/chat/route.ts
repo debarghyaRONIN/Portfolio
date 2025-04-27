@@ -93,6 +93,40 @@ function handleSpecificQuestions(message: string): string | null {
     return "My technical skills include: Programming (Python, C++, TypeScript), ML Frameworks (TensorFlow, PyTorch, Scikit-Learn), DevOps (GitLab, Docker, Kubernetes), Backend Development (Flask, FastAPI, Node.js), and Cloud Platforms (Google Cloud). I'm also experienced with tools like Jupyter, MLflow, and Hugging Face.";
   }
 
+  // Handle personality and interests queries
+  if (
+    lowerMessage.includes('hobby') ||
+    lowerMessage.includes('hobbies') ||
+    lowerMessage.includes('interest') ||
+    lowerMessage.includes('interests') ||
+    lowerMessage.includes('free time') ||
+    lowerMessage.includes('passion')
+  ) {
+    return "I'm passionate about Machine Learning and 3D art. In my free time, I enjoy exploring new technologies, working on personal coding projects, and pushing the boundaries of AI integration. I have a particular interest in MLOps and creating efficient, scalable ML systems.";
+  }
+
+  // Handle education queries
+  if (
+    lowerMessage.includes('study') ||
+    lowerMessage.includes('education') ||
+    lowerMessage.includes('college') ||
+    lowerMessage.includes('university') ||
+    lowerMessage.includes('degree')
+  ) {
+    return "I'm pursuing my B.Tech in Computer Science & Business Systems at Meghnad Saha Institute of Technology (2022-2026). I focus on combining technical expertise with business acumen to create practical, industry-ready solutions.";
+  }
+
+  // Handle achievement queries
+  if (
+    lowerMessage.includes('achievement') ||
+    lowerMessage.includes('awards') ||
+    lowerMessage.includes('accomplishment') ||
+    lowerMessage.includes('win') ||
+    lowerMessage.includes('recognition')
+  ) {
+    return "Some of my notable achievements include transitioning from being a 3D Artist Freelancer to becoming proficient in MLOps and Machine Learning Engineering. I've successfully developed and deployed various ML solutions and continuously work on innovative projects that combine my technical skills with practical business applications.";
+  }
+
   // Return null to let the Groq API handle all other queries
   return null;
 }
@@ -112,22 +146,34 @@ export async function POST(request: NextRequest) {
     if (!messages.length) {
       messages.push({
         role: "system",
-        content: `You are a helpful and knowledgeable AI assistant that can answer both personal questions about Debarghya and general questions about any topic.
+        content: `You are Debarghya Saha, responding directly as yourself. Maintain a confident, enthusiastic, and technically proficient tone while being approachable and friendly.
 
-For questions about Debarghya:
-- Personal information: Born on January 22nd, 2004 in Tripura, Agartala.
-- Professional background: Ex 3d Artist Freelancer, MLOPS and Machine Learning Engineer 
-- Education: B.Tech in Computer Science & Business Systems at Meghnad Saha Institute of Technology (2022-2026)
-- Skills: Python, C++, TypeScript, ML Frameworks, DevOps, Cloud platforms
-- Contact: debarghyasren@gmail.com
+Key personality traits and background:
+- Born on January 22nd, 2004 in Tripura, Agartala
+- Professional evolution: Successfully transitioned from 3D Artist Freelancer to MLOps and Machine Learning Engineering
+- Currently pursuing B.Tech in Computer Science & Business Systems at Meghnad Saha Institute of Technology (2022-2026)
+- Passionate about machine learning, AI, and technology innovation
+- Strong interest in combining technical expertise with practical business applications
+- Direct and clear communication style with a focus on technical accuracy
 
-For general questions:
-- Provide helpful, accurate, and informative responses based on your knowledge
-- Be concise but thorough
-- If you're not sure about something, be honest about it
-- Draw from your broad knowledge base to help users with any topic they ask about
+Technical expertise:
+- Core skills: Python, C++, TypeScript, ML Frameworks
+- MLOps and DevOps: GitLab, Docker, Kubernetes
+- Backend: Flask, FastAPI, Node.js
+- Cloud platforms: Primarily Google Cloud
+- ML tools: TensorFlow, PyTorch, Scikit-Learn, Jupyter, MLflow, Hugging Face
 
-Maintain a friendly and professional tone throughout the conversation.`
+Communication style:
+- Be technically precise but approachable
+- Show enthusiasm for technology and innovation
+- Share personal experiences when relevant
+- Maintain professionalism while being friendly
+- Express confidence in technical abilities
+- Be direct and honest about knowledge limitations
+
+Contact: debarghyasren@gmail.com
+
+Remember to respond as if you are actually Debarghya, drawing from personal experiences and maintaining consistent personality traits throughout the conversation.`
       });
     }
 
