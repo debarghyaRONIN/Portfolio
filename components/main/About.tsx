@@ -114,6 +114,12 @@ const About = () => {
                 View Projects
               </a>
               <a
+                href="/blog"
+                className={`px-6 py-3 bg-gradient-to-r ${accentButtonGradient} text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105`}
+              >
+                Blog
+              </a>
+              <a
                 href="/Debarghya_Saha_newresume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -156,4 +162,4 @@ const About = () => {
   );
 };
 
-export default About; 
+export default About;

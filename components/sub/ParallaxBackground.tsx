@@ -3,10 +3,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { motion, useScroll, useTransform, useMotionValue } from 'framer-motion';
 
-interface ParallaxBackgroundProps {
-  isDarkMode?: boolean;
-}
-
 // Simple seeded random function to ensure consistent generation between server and client
 function seededRandom(seed: number) {
   const m = 2**35 - 31;
@@ -18,7 +14,7 @@ function seededRandom(seed: number) {
   };
 }
 
-const ParallaxBackground = ({ isDarkMode = true }: ParallaxBackgroundProps) => {
+const ParallaxBackground = () => {
   const [isMounted, setIsMounted] = useState(false);
   const { scrollY } = useScroll();
   
@@ -32,7 +28,6 @@ const ParallaxBackground = ({ isDarkMode = true }: ParallaxBackgroundProps) => {
   
   // Generate background elements with consistent randomness
   const particles = useMemo(() => {
-    // Use a fixed seed for random generation
     const random = seededRandom(12345);
     
     return Array.from({ length: 15 }).map((_, i) => ({
@@ -42,15 +37,13 @@ const ParallaxBackground = ({ isDarkMode = true }: ParallaxBackgroundProps) => {
       y: random() * 100,
       depth: random() * 3 + 1,
       opacity: random() * 0.5 + 0.1,
-      color: isDarkMode 
-        ? `rgba(${255}, ${100 + random() * 155}, ${random() * 50}, ${0.2 + random() * 0.3})`
-        : `rgba(${random() * 50}, ${100 + random() * 155}, ${255}, ${0.2 + random() * 0.3})`,
+      color: `rgba(${255}, ${100 + random() * 155}, ${random() * 50}, ${0.2 + random() * 0.3})`,
       animX: random() * 15 - 7.5,
       animY: random() * 15 - 7.5,
       duration: 3 + random() * 7
     }));
-  }, [isDarkMode]);
-
+  }, []);
+  
   // Set up client-side only effects
   useEffect(() => {
     setIsMounted(true);
@@ -80,40 +73,37 @@ const ParallaxBackground = ({ isDarkMode = true }: ParallaxBackgroundProps) => {
     >
       {/* Main gradient background */}
       <motion.div 
-        className={isDarkMode 
-          ? "absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-gray-800" 
-          : "absolute inset-0 bg-gradient-to-br from-gray-100 via-gray-200 to-white"
-        }
-        style={{ 
+        className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-gray-800"
+        style={{
           y: backgroundY,
-          opacity: backgroundOpacity 
+          opacity: backgroundOpacity
         }}
       />
       
-      {/* Animated particles - with simpler animation approach */}
-      {particles.map(particle => (
+      {/* Floating particles */}
+      {particles.map((particle) => (
         <motion.div
           key={particle.id}
-          className="absolute rounded-full transform-gpu animate-gpu"
+          className="absolute rounded-full pointer-events-none"
           style={{
-            width: `${particle.size}px`,
-            height: `${particle.size}px`,
-            backgroundColor: particle.color,
-            boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
+            width: particle.size,
+            height: particle.size,
             left: `${particle.x}%`,
             top: `${particle.y}%`,
+            backgroundColor: particle.color,
             opacity: particle.opacity,
-            transform: `translate(${mouseX.get() * particle.depth * 0.05}px, ${mouseY.get() * particle.depth * 0.05 + backgroundY.get() / (10 * particle.depth)}px)`,
+            zIndex: Math.floor(particle.depth),
+            transform: `translateZ(${particle.depth * 10}px)`,
           }}
           animate={{
-            x: [0, particle.animX],
-            y: [0, particle.animY],
-            transition: {
-              repeat: Infinity,
-              repeatType: "reverse",
-              duration: particle.duration,
-              ease: "easeInOut"
-            }
+            x: [particle.animX, -particle.animX],
+            y: [particle.animY, -particle.animY],
+          }}
+          transition={{
+            repeat: Infinity,
+            repeatType: "reverse",
+            duration: particle.duration,
+            ease: "easeInOut"
           }}
         />
       ))}
@@ -122,9 +112,7 @@ const ParallaxBackground = ({ isDarkMode = true }: ParallaxBackgroundProps) => {
       <div 
         className="absolute inset-0 opacity-10"
         style={{
-          backgroundImage: isDarkMode
-            ? 'linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)'
-            : 'linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)',
           backgroundSize: '50px 50px',
         }}
       />
@@ -132,4 +120,4 @@ const ParallaxBackground = ({ isDarkMode = true }: ParallaxBackgroundProps) => {
   );
 };
 
-export default ParallaxBackground; 
+export default ParallaxBackground;

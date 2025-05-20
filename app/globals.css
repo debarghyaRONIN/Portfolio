@@ -1,9 +1,8 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&family=Montserrat:wght@300;600&display=swap');
 
-/* CSS Variables for theming */
+/* CSS Variables for dark theme */
 :root {
-  /* Dark mode (default) */
   --bg-primary: #0F0F0F;
   --bg-secondary: #171717;
   --text-primary: #FFFFFF;
@@ -15,21 +14,6 @@
   --card-bg: rgba(0, 0, 0, 0.3);
   --shadow-color: rgba(0, 0, 0, 0.2);
   --grid-color: rgba(255, 255, 255, 0.05);
-}
-
-/* Light mode overrides */
-.light-mode {
-  --bg-primary: #F5F5F5;
-  --bg-secondary: #FFFFFF;
-  --text-primary: #171717;
-  --text-secondary: #4B5563;
-  --accent-primary: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
-  --accent-color: #3b82f6;
-  --accent-secondary: #60a5fa;
-  --border-color: rgba(220, 220, 220, 0.7);
-  --card-bg: rgba(255, 255, 255, 0.7);
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --grid-color: rgba(0, 0, 0, 0.05);
 }
 
 .cursive {
@@ -152,13 +136,21 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-padding-top: 80px; /* Keep this for proper offset */
 }
 
 body {
-  @apply bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)];
+  background: linear-gradient(to bottom, var(--bg-primary), var(--bg-secondary));
   color: var(--text-primary);
   transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Section spacing adjustments */
+section[id] {
+  scroll-margin-top: 80px; /* Accounts for navbar height plus buffer */
+  padding-top: 80px;
+  min-height: 100vh;
+  position: relative;
 }
 
 /* Theme transition animations */
@@ -287,45 +279,6 @@ body {
   transform: translateZ(0px) scale(1);
 }
 
-/* Custom cursor style - used by GSAP */
-.custom-cursor {
-  position: fixed;
-  width: 40px;
-  height: 40px;
-  border: 2px solid rgba(255, 100, 0, 0.5);
-  border-radius: 50%;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  z-index: 9999;
-  transition: width 0.3s, height 0.3s, border-color 0.3s;
-}
-
-.cursor-dot {
-  position: fixed;
-  width: 8px;
-  height: 8px;
-  background-color: rgba(255, 100, 0, 0.8);
-  border-radius: 50%;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  z-index: 10000;
-}
-
-.cursor-hover {
-  width: 60px;
-  height: 60px;
-  border-color: rgba(255, 180, 0, 0.5);
-  background-color: rgba(255, 100, 0, 0.1);
-  mix-blend-mode: difference;
-}
-
-/* Disable custom cursor on mobile */
-@media (max-width: 768px) {
-  .custom-cursor, .cursor-dot {
-    display: none;
-  }
-}
-
 /* 3D Transform and Card Tilt Effect Styles */
 .perspective-container {
   perspective: 1000px;
@@ -392,11 +345,6 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* Smooth scroll for the whole page */
-html {
-  scroll-behavior: smooth;
 }
 
 /* Add smooth transitions to all interactive elements */
@@ -489,4 +437,85 @@ section {
   .animate-gpu, .transform-gpu {
     will-change: auto; /* Reduce GPU memory usage on mobile */
   }
+}
+
+/* Code block styling */
+pre[class*="language-"] {
+  background: #1e1e1e !important;
+  padding: 1em !important;
+  margin: 0 !important;
+  overflow: auto !important;
+  border-radius: 0.5rem !important;
+}
+
+/* Line numbers styling */
+pre[class*="language-"].line-numbers {
+  position: relative;
+  padding-left: 3.8em !important;
+  counter-reset: linenumber;
+}
+
+pre[class*="language-"].line-numbers > code {
+  position: relative;
+  white-space: inherit;
+}
+
+.line-numbers .line-numbers-rows {
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  font-size: 100%;
+  left: -3.8em;
+  width: 3em; /* works for line-numbers below 1000 lines */
+  letter-spacing: -1px;
+  border-right: 1px solid #999;
+  user-select: none;
+}
+
+.line-numbers-rows > span {
+  display: block;
+  counter-increment: linenumber;
+  pointer-events: none;
+}
+
+.line-numbers-rows > span:before {
+  content: counter(linenumber);
+  color: #999;
+  display: block;
+  padding-right: 0.8em;
+  text-align: right;
+}
+
+/* Dark mode syntax highlighting overrides */
+.dark .token.comment,
+.dark .token.prolog,
+.dark .token.doctype,
+.dark .token.cdata {
+  color: #6a9955;
+}
+
+.dark .token.punctuation {
+  color: #d4d4d4;
+}
+
+.dark .token.function,
+.dark .token.property {
+  color: #dcdcaa;
+}
+
+.dark .token.keyword {
+  color: #569cd6;
+}
+
+.dark .token.string {
+  color: #ce9178;
+}
+
+.dark .token.number {
+  color: #b5cea8;
+}
+
+/* Copy button hover effect */
+.code-copy-button:hover {
+  opacity: 1;
 }

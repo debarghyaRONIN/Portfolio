@@ -9,7 +9,7 @@ const AnimationInitializer = () => {
     if (typeof window !== "undefined") {
       initializeGSAPAnimations();
       
-      // Add smooth scroll behavior to all anchor links
+      // Remove smooth scroll behavior since we're using GSAP
       document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', (e) => {
           e.preventDefault();
@@ -17,9 +17,10 @@ const AnimationInitializer = () => {
           if (targetId && targetId.startsWith('#')) {
             const targetElement = document.querySelector(targetId);
             if (targetElement) {
-              targetElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
+              const rect = targetElement.getBoundingClientRect();
+              window.scrollTo({
+                top: window.scrollY + rect.top - 80,
+                behavior: 'instant'
               });
             }
           }
@@ -32,4 +33,4 @@ const AnimationInitializer = () => {
   return null;
 };
 
-export default AnimationInitializer; 
+export default AnimationInitializer;

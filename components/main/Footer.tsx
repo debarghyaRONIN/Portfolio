@@ -31,13 +31,13 @@ const Footer = () => {
 
   // Dynamic classes based on theme
   const bgClass = isDarkMode ? "bg-[#080808]" : "bg-gray-100";
-  const textClass = isDarkMode ? "text-gray-200" : "text-gray-800";
-  const headingClass = isDarkMode ? "text-white" : "text-gray-900";
+  const textClass = isDarkMode ? "text-gray-200" : "text-black";
+  const headingClass = isDarkMode ? "text-white" : "text-black";
   const borderClass = isDarkMode ? "border-gray-800" : "border-gray-300";
-  const linkClass = isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-blue-600";
+  const linkClass = isDarkMode ? "text-gray-300 hover:text-white" : "text-black hover:text-blue-600";
   const iconClass = isDarkMode ? "text-red-500" : "text-blue-500";
-  const socialClass = isDarkMode ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-blue-600";
-  const footerTextClass = isDarkMode ? "text-gray-400" : "text-gray-500";
+  const socialClass = isDarkMode ? "text-gray-400 hover:text-white" : "text-black hover:text-blue-600";
+  const footerTextClass = isDarkMode ? "text-gray-400" : "text-black";
 
   // Email information - direct Gmail compose link
   const emailAddress = "debarghyasren@gmail.com";

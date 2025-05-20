@@ -12,7 +12,46 @@ import { animateSkills } from "@/utils/gsapAnimations";
 import SkillDataProvider from "../sub/SkillDataProvider";
 import SkillText from "../sub/SkillText";
 import { motion } from "framer-motion";
-import { staggerContainer, fadeIn, cardVariants } from "@/utils/framerAnimations";
+
+// Animation variants
+const fadeIn = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+};
+
+const staggerContainer = {
+    hidden: {},
+    visible: {
+        transition: {
+            staggerChildren: 0.2,
+            delayChildren: 0.3
+        }
+    }
+};
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1,
+            delayChildren: 0.3
+        }
+    }
+};
+
+const cardVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.95 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: {
+            duration: 0.6,
+            ease: "easeOut"
+        }
+    }
+};
 
 const Skills = () => {
     const [isDarkMode, setIsDarkMode] = useState(true);
@@ -55,24 +94,12 @@ const Skills = () => {
         : "bg-gradient-to-r from-blue-600/10 via-blue-500/10 to-blue-400/10";
     
     const cardBgClasses = isDarkMode
-        ? "bg-black/30 border-gray-800"
-        : "bg-white/80 border-gray-200";
+        ? "bg-black/30 border-gray-800 hover:shadow-orange-500/20"
+        : "bg-white/80 border-gray-200 hover:shadow-blue-500/20";
     
     const titleClasses = isDarkMode
         ? "text-white"
         : "text-gray-800";
-        
-    // Staggered animation for the skill cards
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.2,
-                delayChildren: 0.3
-            }
-        }
-    };
 
     return (
         <motion.section
@@ -84,15 +111,9 @@ const Skills = () => {
             variants={fadeIn}
         >
             {/* Background with gradient */}
-            <div className="absolute inset-0 w-full h-full z-[-1]">
-                <div className={`absolute inset-0 transition-colors duration-500 ${bgClasses}`}></div>
+            <div className={`absolute inset-0 w-full h-full z-[-1] transition-colors duration-500 ${bgClasses}`}>
+                <div className={`absolute inset-0 transition-colors duration-500 ${gradientClasses}`}></div>
                 <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
-                <motion.div 
-                    className={`absolute inset-0 transition-colors duration-500 ${gradientClasses}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.8 }}
-                ></motion.div>
             </div>
 
             {/* Content Layer */}
@@ -115,11 +136,13 @@ const Skills = () => {
                     >
                         {/* Main Skills */}
                         <motion.div 
-                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}
+                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover border transition-all duration-500 ${cardBgClasses}`}
                             variants={cardVariants}
                             whileHover={{
                                 y: -10,
-                                boxShadow: "0px 10px 25px rgba(0,0,0,0.25)",
+                                boxShadow: isDarkMode 
+                                    ? "0px 10px 25px rgba(255,100,0,0.2)"
+                                    : "0px 10px 25px rgba(0,100,255,0.2)",
                                 transition: { duration: 0.3, ease: "easeOut" }
                             }}
                         >
@@ -145,11 +168,13 @@ const Skills = () => {
 
                         {/* Frontend Skills */}
                         <motion.div 
-                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}
+                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover border transition-all duration-500 ${cardBgClasses}`}
                             variants={cardVariants}
                             whileHover={{
                                 y: -10,
-                                boxShadow: "0px 10px 25px rgba(0,0,0,0.25)",
+                                boxShadow: isDarkMode 
+                                    ? "0px 10px 25px rgba(255,100,0,0.2)"
+                                    : "0px 10px 25px rgba(0,100,255,0.2)",
                                 transition: { duration: 0.3, ease: "easeOut" }
                             }}
                         >
@@ -175,11 +200,13 @@ const Skills = () => {
                         
                         {/* ML/AI Skills */}
                         <motion.div 
-                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}
+                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover border transition-all duration-500 ${cardBgClasses}`}
                             variants={cardVariants}
                             whileHover={{
                                 y: -10,
-                                boxShadow: "0px 10px 25px rgba(0,0,0,0.25)",
+                                boxShadow: isDarkMode 
+                                    ? "0px 10px 25px rgba(255,100,0,0.2)"
+                                    : "0px 10px 25px rgba(0,100,255,0.2)",
                                 transition: { duration: 0.3, ease: "easeOut" }
                             }}
                         >
@@ -205,11 +232,13 @@ const Skills = () => {
                         
                         {/* Backend Skills */}
                         <motion.div 
-                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover transition-colors duration-500 ${cardBgClasses}`}
+                            className={`skill-card backdrop-blur-sm p-6 rounded-lg card-hover border transition-all duration-500 ${cardBgClasses}`}
                             variants={cardVariants}
                             whileHover={{
                                 y: -10,
-                                boxShadow: "0px 10px 25px rgba(0,0,0,0.25)",
+                                boxShadow: isDarkMode 
+                                    ? "0px 10px 25px rgba(255,100,0,0.2)"
+                                    : "0px 10px 25px rgba(0,100,255,0.2)",
                                 transition: { duration: 0.3, ease: "easeOut" }
                             }}
                         >
