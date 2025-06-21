@@ -3,6 +3,8 @@ export interface Skill {
   width: number;
   height: number;
 }
+// constants/index.ts
+export const GA_TRACKING_ID = 'G-FZDVTBDP9T';
 
 export const Skill_data: Skill[] = [
   {
