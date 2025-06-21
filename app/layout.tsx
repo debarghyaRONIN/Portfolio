@@ -5,7 +5,7 @@ import ClientLayout from "./ClientLayout";
 import { Toaster } from "react-hot-toast";
 import { GA_TRACKING_ID } from "../constants";
 import Script from "next/script";
-import Analytics from "../components/Analytics";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,7 +55,7 @@ export default function RootLayout({
         />
 
         <ClientLayout>{children}</ClientLayout>
-        <Analytics />
+       
         <Toaster />
       </body>
     </html>
