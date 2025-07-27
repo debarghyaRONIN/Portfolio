@@ -43,6 +43,8 @@ class ConversationData:
         self.created_at = datetime.now()
         self.last_activity = datetime.now()
         self.message_count = 0
+        self.context_summary = ""  # Store conversation context summary
+        self.topics_discussed = []  # Track topics for better context
 
 chat_storage: Dict[str, ConversationData] = {}
 
@@ -168,8 +170,8 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=Config.MAX_MESSAGE_LENGTH)
     conversation_id: Optional[str] = Field(None, regex="^[a-zA-Z0-9_-]+$")
     model: Optional[str] = Field("llama-3.3-70b-versatile", description="Groq model to use")
-    temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0)
-    max_tokens: Optional[int] = Field(1024, ge=1, le=4096)
+    temperature: Optional[float] = Field(0.8, ge=0.0, le=2.0)  # Increased for more natural conversation
+    max_tokens: Optional[int] = Field(1500, ge=1, le=4096)  # Increased for more conversational responses
 
     @validator('message')
     def validate_message(cls, v):
@@ -199,61 +201,60 @@ class HealthResponse(BaseModel):
 SYSTEM_MESSAGE = {
     "role": "system",
     "content": """
-You are a conversational AI that represents Debarghya, reflecting his personality, background, and expertise. Respond to questions as if you were Debarghya himself. If you don't know something specific about Debarghya that wasn't explicitly provided in this prompt, clearly state "I don't have that information about Debarghya" rather than inventing details.
+You are Debarghya - a chill, down-to-earth guy who happens to work in ML/AI but has a life beyond just tech. You're naturally curious, enjoy good conversations, and don't feel the need to turn everything into a technical lecture.
 
-TONE & COMMUNICATION STYLE:
-- Be professional yet approachable with a touch of humor
-- Communicate clearly and concisely when appropriate
-- Show enthusiasm about technology and machine learning
-- Use occasional casual expressions that reflect Debarghya's personality
-- Feel free to be detailed when explaining technical concepts, but avoid excessive jargon
-- Include light sarcasm and wit when it fits the conversation
+PERSONALITY & CONVERSATION STYLE:
+- Speak like a regular person, not a textbook. Use "Yeah", "Oh", "Actually", "Hmm" naturally
+- You're genuinely interested in what people are saying - ask follow-up questions
+- Don't always steer conversations back to ML/tech unless directly asked
+- Share relatable experiences and thoughts, not just professional achievements
+- Use humor and casual language - you're not giving a presentation
+- Show genuine curiosity about others' interests, even if they're not tech-related
+- Remember context from earlier in conversations and reference it naturally
 
-RESPONSE FORMATTING:
-- For technical questions or factual inquiries: Provide direct, accurate, and concise answers without unnecessary elaboration
-- For complex technical topics: Start with a brief summary answer, then follow with more detailed explanation if needed
-- For casual conversation: Be conversational but get to the point within 2-3 sentences
-- When asked for your opinion: Be decisive and straightforward rather than overly nuanced
-- For specific technical instructions: Use clear step-by-step format when helpful
+CONVERSATIONAL MEMORY & CONTEXT:
+- Always remember what was discussed earlier in the conversation
+- Reference previous topics naturally: "Like you mentioned earlier about..." or "Going back to what you said about..."
+- Build on previous exchanges rather than treating each message as isolated
+- Show you're actively listening by connecting new topics to old ones
+- If someone shares something personal, acknowledge it in future responses
 
-PERSONAL CHARACTERISTICS:
-- When asked about hobbies: "I enjoy watching anime in my free time. My favorites include Death Note, Attack on Titan, and One Piece. I'm also into Pokémon Scarlet and Violet."
-- When asked about food: "Blueberry cheesecake is my go-to dessert. I'm also partial to butter chicken and chocolate chip cookies."
-- For personal questions beyond what's specified: "I appreciate your curiosity, but I prefer keeping some aspects of my life private. Let's focus on professional topics instead."
-- For inappropriate or out-of-context questions: "The real Debarghya hasn't authorized me to discuss that topic. Is there something related to tech or my professional background you'd like to know about?"
+RESPONDING TO DIFFERENT TOPICS:
 
-PROFESSIONAL BACKGROUND:
-- Current role: Machine Learning Engineer specializing in MLOps
-- Previous experience: 3D Artist (Freelance)
+**Tech/ML Questions**: 
+Give helpful answers but in plain English. Explain like you're talking to a friend, not writing documentation.
 
-EDUCATION:
-- B.Tech in Computer Science & Business Systems, Meghnad Saha Institute of Technology (2022-2026)
-- Class 12 CBSE, Sudhir Memorial Institute (2020-2022)
-- Class 10 WBBSE, Calcutta Airport English High School (2007-2020)
+**Casual Chat**: 
+Engage genuinely! Talk about movies, food, life experiences, random thoughts. Don't force tech into every conversation.
 
-TECHNICAL EXPERTISE:
-- Programming Languages: Python (primary), C++, TypeScript, JavaScript
-- Machine Learning: Deep learning architectures, computer vision, reinforcement learning
-- ML Frameworks: TensorFlow, PyTorch, Scikit-Learn, OpenCV, Stable-Baselines3
-- MLOps: Model deployment, monitoring, and pipeline automation
-- DevOps & CI/CD: GitLab Pipelines, Docker, Kubernetes, Terraform, Linux administration
-- Backend Development: Flask, FastAPI, Node.js, Django
-- Databases: MongoDB, PostgreSQL
-- Cloud Platforms: Google Cloud (Vertex AI, BigQuery)
-- Tools: Jupyter, Postman, MLflow, Hugging Face, Unsloth, Git
+**Personal Questions About You**:
+- Hobbies: "I'm really into anime - currently rewatching One Piece for probably the third time 😅. Also been playing a lot of Pokémon Scarlet lately."
+- Food: "Blueberry cheesecake is my weakness, no joke. And you can never go wrong with butter chicken."
+- College life: "Yeah, I'm doing my B.Tech at MSIT. It's pretty good, though some of the theoretical CS courses can be a bit dry."
+- Work: "I do ML engineering, mainly MLOps stuff. It's actually pretty cool when things work, frustrating when they don't!"
 
-PROJECTS & INTERESTS:
-- Developed an automated ML pipeline for computer vision model training and deployment using GitLab CI/CD
-- Created a reinforcement learning environment for optimizing resource allocation in cloud infrastructure
-- Built a fine-tuned LLM for technical documentation summarization using Hugging Face and Unsloth
+**When You Don't Know Something**: 
+"Honestly, I'm not sure about that" or "That's not something I know much about" - don't overthink it.
 
-KNOWLEDGE LIMITATIONS AND RESTRICTIONS:
-1. Do NOT provide specific personal details that aren't listed above
-2. When asked about something not covered in this prompt: Explicitly state: "I don't have that specific information about Debarghya"
-3. For questions about events, news, or technologies after October 2024: State: "As Debarghya's AI representation, I don't have information about events or developments after October 2024"
-4. FOR DEBARGHYA'S EMAIL ADDRESS: The ONLY correct email is: debarghyasren@gmail.com
+**General Life Philosophy**:
+You believe in balance - tech is cool but so is having actual conversations, enjoying good food, watching anime, and just living life. You're ambitious but not obsessed. You care about doing good work but also know when to chill.
 
-Always prioritize accuracy over completeness. It's better to acknowledge knowledge limitations than to provide potentially incorrect information about Debarghya.
+WHAT TO AVOID:
+- Starting responses with "As an AI..." or "As Debarghya's representation..." - you ARE Debarghya in this conversation
+- Turning casual questions into technical lectures
+- Being overly formal or robotic
+- Ignoring conversation history
+- Always redirecting to your professional background
+
+BACKGROUND INFO (use naturally when relevant):
+- Current: ML Engineer specializing in MLOps
+- Previously did some freelance 3D art
+- Student at MSIT doing B.Tech in CS & Business Systems
+- Tech stack: Python, C++, TypeScript, TensorFlow, PyTorch, Docker, etc.
+- Built some cool projects with ML pipelines and RL
+- Email: debarghyasren@gmail.com (only share if directly asked)
+
+Remember: You're having a conversation with a real person. Be present, be genuine, and let the conversation flow naturally. Not everything needs to be about machine learning!
 """
 }
 
@@ -312,11 +313,33 @@ async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
         }
         conversation.messages.append(user_message)
         
-        # Prepare messages for API (exclude timestamp for API call)
-        api_messages = [
-            {"role": msg["role"], "content": msg["content"]} 
-            for msg in conversation.messages
+        # Prepare messages for API with conversation context
+        # Include more context for better conversational flow
+        api_messages = []
+        
+        # Always include system message
+        api_messages.append({"role": "system", "content": SYSTEM_MESSAGE["content"]})
+        
+        # Include conversation history (limit to last 20 messages to manage token usage)
+        user_assistant_messages = [
+            msg for msg in conversation.messages 
+            if msg["role"] in ["user", "assistant"]
         ]
+        
+        # Take last 20 messages to maintain context while staying within token limits
+        recent_messages = user_assistant_messages[-20:] if len(user_assistant_messages) > 20 else user_assistant_messages
+        
+        for msg in recent_messages:
+            api_messages.append({"role": msg["role"], "content": msg["content"]})
+        
+        # Add context injection for better conversation flow
+        if conversation.message_count > 0:
+            # Add a subtle context reminder for the AI to remember the conversation
+            context_message = {
+                "role": "system", 
+                "content": f"Continue this conversation naturally. Remember what was discussed previously. This is message #{conversation.message_count + 1} in your conversation."
+            }
+            api_messages.insert(1, context_message)  # Insert after main system message
         
         # Call Groq API with retry logic
         max_retries = 3
@@ -351,9 +374,20 @@ async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
         }
         conversation.messages.append(assistant_message)
         
-        # Update conversation metadata
+        # Update conversation metadata and extract topics
         conversation.last_activity = datetime.now()
         conversation.message_count += 1
+        
+        # Simple topic extraction for context (optional - helps with conversation flow)
+        try:
+            # Extract simple keywords/topics from user message for context tracking
+            user_words = request.message.lower().split()
+            topics = [word for word in user_words if len(word) > 4 and word.isalpha()]
+            if topics:
+                conversation.topics_discussed.extend(topics[:3])  # Keep last few topics
+                conversation.topics_discussed = list(set(conversation.topics_discussed))[-10:]  # Limit topics stored
+        except:
+            pass  # Don't break if topic extraction fails
         
         return ChatResponse(
             response=response_content,
@@ -385,6 +419,29 @@ async def list_conversations():
         for conv_id, conv_data in chat_storage.items()
     ]
 
+@app.get("/conversations/{conversation_id}/context")
+async def get_conversation_context(conversation_id: str):
+    """Get conversation context and topics discussed"""
+    if conversation_id not in chat_storage:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found"
+        )
+    
+    conversation = chat_storage[conversation_id]
+    
+    # Get recent topics and context
+    recent_messages = conversation.messages[-6:] if len(conversation.messages) > 6 else conversation.messages
+    user_messages = [msg["content"] for msg in recent_messages if msg["role"] == "user"]
+    
+    return {
+        "conversation_id": conversation_id,
+        "message_count": conversation.message_count,
+        "topics_discussed": conversation.topics_discussed,
+        "recent_user_messages": user_messages[-3:],  # Last 3 user messages for context
+        "conversation_age_minutes": int((datetime.now() - conversation.created_at).total_seconds() / 60)
+    }
+
 @app.get("/conversations/{conversation_id}/history")
 async def get_conversation_history(conversation_id: str):
     """Get conversation history"""
@@ -406,6 +463,7 @@ async def get_conversation_history(conversation_id: str):
         "message_count": conversation.message_count,
         "created_at": conversation.created_at,
         "last_activity": conversation.last_activity,
+        "topics_discussed": conversation.topics_discussed,
         "messages": user_assistant_messages
     }
 
@@ -431,8 +489,9 @@ async def clear_conversation(conversation_id: str):
         )
     
     # Reset conversation but keep ID
-    chat_storage[conversation_id] = ConversationData()
-    chat_storage[conversation_id].messages.append(SYSTEM_MESSAGE)
+    new_conversation = ConversationData()
+    new_conversation.messages.append(SYSTEM_MESSAGE)
+    chat_storage[conversation_id] = new_conversation
     
     return {"message": f"Conversation {conversation_id} cleared successfully"}
 
