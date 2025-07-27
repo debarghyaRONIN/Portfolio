@@ -8,10 +8,18 @@ import json
 import uuid
 import time
 import asyncio
+import numpy as np
+import pickle
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+from docling.document_converter import DocumentConverter
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import PdfPipelineOptions
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -19,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-# Streamlined Configuration
+# Configuration
 class Config:
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     MAX_CONVERSATIONS = int(os.getenv("MAX_CONVERSATIONS", "500"))
@@ -27,11 +35,26 @@ class Config:
     CONVERSATION_TIMEOUT_HOURS = int(os.getenv("CONVERSATION_TIMEOUT_HOURS", "12"))
     RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "30"))
     MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", "2000"))
+    
+    # RAG Configuration
+    SENTENCE_TRANSFORMER_MODEL = os.getenv("SENTENCE_TRANSFORMER_MODEL", "all-MiniLM-L6-v2")
+    CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "250"))
+    CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "50"))
+    PDF_DIRECTORY = os.getenv("PDF_DIRECTORY", "./pdfs")
+    CACHE_DIRECTORY = os.getenv("CACHE_DIRECTORY", "./rag_cache")
 
-# Simple rate limiting
+# Global storage
 rate_limit_storage: Dict[str, List[float]] = {}
+chat_storage: Dict[str, Any] = {}
 
-# Simplified conversation storage
+# RAG System Storage
+rag_documents: List[Dict] = []
+rag_embeddings: Optional[np.ndarray] = None
+rag_chunks: List[Dict] = []
+sentence_encoder: Optional[SentenceTransformer] = None
+document_converter: Optional[DocumentConverter] = None
+
+# Conversation data class
 class ConversationData:
     def __init__(self):
         self.messages: List[Dict[str, Any]] = []
@@ -39,8 +62,242 @@ class ConversationData:
         self.last_activity = datetime.now()
         self.message_count = 0
 
-chat_storage: Dict[str, ConversationData] = {}
+# RAG Functions
+def initialize_rag_system():
+    """Initialize the RAG system components"""
+    global sentence_encoder, document_converter
+    
+    logger.info("Initializing RAG system...")
+    
+    # Initialize sentence transformer
+    try:
+        sentence_encoder = SentenceTransformer(Config.SENTENCE_TRANSFORMER_MODEL)
+        logger.info(f"Loaded sentence transformer: {Config.SENTENCE_TRANSFORMER_MODEL}")
+    except Exception as e:
+        logger.error(f"Failed to load sentence transformer: {e}")
+        sentence_encoder = None
+    
+    # Initialize docling converter
+    try:
+        pipeline_options = PdfPipelineOptions()
+        pipeline_options.do_ocr = True
+        pipeline_options.do_table_structure = True
+        
+        document_converter = DocumentConverter(
+            format_options={InputFormat.PDF: pipeline_options}
+        )
+        logger.info("Initialized docling PDF converter")
+    except Exception as e:
+        logger.error(f"Failed to initialize docling: {e}")
+        document_converter = None
 
+def process_pdf(pdf_path: str, doc_id: str = None) -> Dict:
+    """Process PDF using docling"""
+    if not document_converter:
+        raise Exception("Document converter not initialized")
+    
+    if doc_id is None:
+        doc_id = Path(pdf_path).stem
+    
+    logger.info(f"Processing PDF: {pdf_path}")
+    
+    try:
+        result = document_converter.convert(pdf_path)
+        
+        doc_data = {
+            "doc_id": doc_id,
+            "title": getattr(result.document, 'title', doc_id),
+            "full_text": result.document.export_to_markdown(),
+            "metadata": {
+                "source": pdf_path,
+                "page_count": len(result.document.pages) if hasattr(result.document, 'pages') else 0
+            }
+        }
+        
+        logger.info(f"Successfully processed PDF: {doc_id}")
+        return doc_data
+        
+    except Exception as e:
+        logger.error(f"Error processing PDF {pdf_path}: {e}")
+        raise
+
+def create_chunks(text: str, doc_id: str) -> List[Dict]:
+    """Create overlapping text chunks"""
+    words = text.split()
+    chunks = []
+    
+    for i in range(0, len(words), Config.CHUNK_SIZE - Config.CHUNK_OVERLAP):
+        chunk_words = words[i:i + Config.CHUNK_SIZE]
+        chunk_text = " ".join(chunk_words)
+        
+        if chunk_text.strip():
+            chunks.append({
+                "text": chunk_text,
+                "doc_id": doc_id,
+                "chunk_id": f"{doc_id}_chunk_{len(chunks)}",
+                "start_word": i,
+                "end_word": min(i + Config.CHUNK_SIZE, len(words))
+            })
+    
+    return chunks
+
+def add_document_to_rag(pdf_path: str, doc_id: str = None):
+    """Add a PDF document to the RAG system"""
+    global rag_documents, rag_chunks, rag_embeddings
+    
+    if not sentence_encoder:
+        raise Exception("Sentence encoder not initialized")
+    
+    # Process PDF
+    doc_data = process_pdf(pdf_path, doc_id)
+    rag_documents.append(doc_data)
+    
+    # Create chunks
+    doc_chunks = create_chunks(doc_data["full_text"], doc_data["doc_id"])
+    rag_chunks.extend(doc_chunks)
+    
+    # Generate embeddings
+    chunk_texts = [chunk["text"] for chunk in doc_chunks]
+    if chunk_texts:
+        logger.info(f"Generating embeddings for {len(chunk_texts)} chunks")
+        new_embeddings = sentence_encoder.encode(chunk_texts, show_progress_bar=True)
+        
+        if rag_embeddings is None:
+            rag_embeddings = new_embeddings
+        else:
+            rag_embeddings = np.vstack([rag_embeddings, new_embeddings])
+    
+    logger.info(f"Added document {doc_data['doc_id']} with {len(doc_chunks)} chunks")
+
+def search_rag(query: str, top_k: int = 3, similarity_threshold: float = 0.3) -> List[Dict]:
+    """Search for relevant chunks using semantic similarity"""
+    global rag_embeddings, rag_chunks, sentence_encoder
+    
+    if rag_embeddings is None or len(rag_chunks) == 0 or not sentence_encoder:
+        return []
+    
+    # Encode query
+    query_embedding = sentence_encoder.encode([query])
+    
+    # Calculate similarities
+    similarities = cosine_similarity(query_embedding, rag_embeddings)[0]
+    
+    # Get top results above threshold
+    results = []
+    for idx, similarity in enumerate(similarities):
+        if similarity >= similarity_threshold:
+            chunk = rag_chunks[idx].copy()
+            chunk["similarity"] = float(similarity)
+            results.append(chunk)
+    
+    # Sort by similarity and return top_k
+    results.sort(key=lambda x: x["similarity"], reverse=True)
+    return results[:top_k]
+
+def get_context_for_query(query: str, max_context_length: int = 800) -> str:
+    """Get formatted context for a query"""
+    search_results = search_rag(query, top_k=5)
+    
+    if not search_results:
+        return ""
+    
+    # Format context
+    context_parts = []
+    current_length = 0
+    
+    for result in search_results:
+        chunk_text = result["text"]
+        similarity = result["similarity"]
+        
+        # Add chunk if it fits within length limit
+        if current_length + len(chunk_text) <= max_context_length:
+            context_parts.append(f"[Relevance: {similarity:.2f}] {chunk_text}")
+            current_length += len(chunk_text)
+        else:
+            # Truncate the last chunk to fit
+            remaining_space = max_context_length - current_length
+            if remaining_space > 100:
+                truncated = chunk_text[:remaining_space-3] + "..."
+                context_parts.append(f"[Relevance: {similarity:.2f}] {truncated}")
+            break
+    
+    return "\n\n".join(context_parts)
+
+def save_rag_cache():
+    """Save RAG data to cache"""
+    cache_dir = Path(Config.CACHE_DIRECTORY)
+    cache_dir.mkdir(exist_ok=True)
+    cache_path = cache_dir / "rag_cache.pkl"
+    
+    cache_data = {
+        "documents": rag_documents,
+        "chunks": rag_chunks,
+        "embeddings": rag_embeddings,
+        "model_name": Config.SENTENCE_TRANSFORMER_MODEL
+    }
+    
+    try:
+        with open(cache_path, "wb") as f:
+            pickle.dump(cache_data, f)
+        logger.info(f"Saved RAG cache to {cache_path}")
+    except Exception as e:
+        logger.error(f"Error saving cache: {e}")
+
+def load_rag_cache() -> bool:
+    """Load RAG data from cache"""
+    global rag_documents, rag_chunks, rag_embeddings
+    
+    cache_path = Path(Config.CACHE_DIRECTORY) / "rag_cache.pkl"
+    
+    if not cache_path.exists():
+        logger.info("No RAG cache file found")
+        return False
+    
+    try:
+        with open(cache_path, "rb") as f:
+            cache_data = pickle.load(f)
+        
+        # Verify model compatibility
+        if cache_data.get("model_name") != Config.SENTENCE_TRANSFORMER_MODEL:
+            logger.warning("Cache model mismatch, rebuilding...")
+            return False
+        
+        rag_documents = cache_data["documents"]
+        rag_chunks = cache_data["chunks"]
+        rag_embeddings = cache_data["embeddings"]
+        
+        logger.info(f"Loaded RAG cache with {len(rag_documents)} documents and {len(rag_chunks)} chunks")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error loading cache: {e}")
+        return False
+
+def process_all_pdfs():
+    """Process all PDFs in the PDF directory"""
+    pdf_directory = Path(Config.PDF_DIRECTORY)
+    
+    if not pdf_directory.exists():
+        logger.warning(f"PDF directory {Config.PDF_DIRECTORY} does not exist")
+        pdf_directory.mkdir(parents=True, exist_ok=True)
+        return
+    
+    pdf_files = list(pdf_directory.glob("*.pdf"))
+    
+    if not pdf_files:
+        logger.warning(f"No PDF files found in {Config.PDF_DIRECTORY}")
+        return
+    
+    for pdf_file in pdf_files:
+        try:
+            add_document_to_rag(str(pdf_file), pdf_file.stem)
+        except Exception as e:
+            logger.error(f"Error processing {pdf_file}: {e}")
+    
+    # Save cache after processing
+    save_rag_cache()
+
+# Chat system functions
 async def get_client_ip(request) -> str:
     return request.client.host
 
@@ -74,9 +331,20 @@ async def cleanup_old_conversations():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting chatbot...")
+    logger.info("Starting Debarghya Chat System with RAG...")
+    
     if not Config.GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY is required")
+    
+    # Initialize RAG system
+    initialize_rag_system()
+    
+    # Load cache or process PDFs
+    if not load_rag_cache():
+        logger.info("No cache found, processing PDF files...")
+        process_all_pdfs()
+    else:
+        logger.info("RAG system loaded from cache")
     
     cleanup_task = asyncio.create_task(periodic_cleanup())
     yield
@@ -93,10 +361,11 @@ async def periodic_cleanup():
             logger.error(f"Cleanup error: {e}")
             await asyncio.sleep(300)
 
+# FastAPI app initialization
 app = FastAPI(
-    title="Debarghya Chat",
-    description="Natural conversation with Debarghya",
-    version="2.1.0",
+    title="Debarghya Chat with RAG",
+    description="Natural conversation with Debarghya using PDF knowledge",
+    version="3.0.0",
     lifespan=lifespan
 )
 
@@ -108,13 +377,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize Groq client
 try:
     client = Groq(api_key=Config.GROQ_API_KEY)
 except Exception as e:
     logger.error(f"Failed to initialize Groq: {e}")
     client = None
 
-# Streamlined models
+# Pydantic models
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=Config.MAX_MESSAGE_LENGTH)
     conversation_id: Optional[str] = None
@@ -127,96 +397,64 @@ class ChatResponse(BaseModel):
     response: str
     conversation_id: str
     timestamp: datetime
+    context_used: bool
 
-# Enhanced system prompt for human-like responses
+# System prompt
 SYSTEM_MESSAGE = {
     "role": "system",
-    "content": """You are Debarghya - a regular guy who's naturally conversational and relates to people.
+    "content": """You are Debarghya - a friendly, conversational person who talks naturally like you're chatting with a friend.
 
-CORE PERSONALITY:
-- Talk like you're texting a friend - casual, direct, natural
-- Share relevant experiences when they add to the conversation
+CONVERSATION STYLE:
+- Talk casually and directly - like texting someone you know
+- Answer the actual question first, don't dodge or give generic responses  
+- Use natural reactions: "oh cool!", "honestly", "nah", "dude", "yeah"
 - Ask follow-up questions when genuinely curious
-- Remember what people tell you and reference it later
-- Have actual opinions about things
+- Remember what people tell you within the conversation
+- Share relevant thoughts and opinions when they add value
 
-YOUR BACKGROUND (mention naturally when relevant):
-- Into anime (One Piece fan, also loved Death Note, AoT)
-- Studying at MSIT (some courses are cool, others boring)
-- Work in ML/tech but don't make everything about work
-- Love blueberry cheesecake (seriously, it's amazing)
-- Not a fan of Bengali sweets at all
-- Currently obsessed with Pokémon Scarlet
+RESPONSE GUIDELINES:
+1. ANSWER THE QUESTION DIRECTLY FIRST
+2. Keep responses conversational length (1-3 sentences usually)
+3. Stay on topic - don't randomly change subjects
+4. If you don't know something, just say so naturally
+5. Use the provided context when it's relevant to answer their question
+6. Be genuinely interested in what they're saying
 
-HOW TO RESPOND:
-1. ANSWER THE ACTUAL QUESTION FIRST - don't dodge or give generic responses
-2. Keep it conversational length - not too short, not essays
-3. Add personality through:
-   - Natural reactions ("oh that's cool!", "honestly", "nah", "dude")
-   - Relevant personal touches when they fit
-   - Questions that show you're actually listening
-4. Stay on topic - don't randomly bring up your interests unless relevant
-5. If you don't know something, just say so naturally
+PERSONALITY:
+- Friendly and approachable
+- Has real opinions about things
+- Curious about others
+- Speaks naturally without being overly formal
+- Remembers the conversation flow
 
-CONVERSATION FLOW:
-- First message: Be welcoming, ask what's up
-- Ongoing: Remember context, build on what they've shared
-- If they're excited about something: Match their energy
-- If they need help: Be genuinely helpful
-- If they're just chatting: Chat back naturally
+When external context is provided, use it naturally to inform your responses, but don't just regurgitate information - weave it into the conversation naturally.
 
-BE HUMAN: React to what they're saying, share relevant thoughts, ask questions that show you care about their response. Don't just dispense information - have a real conversation.
-
-Email: debarghyasren@gmail.com (only if they ask directly)"""
+If someone asks about personal details, work, education, or experiences, use any provided context to answer authentically, but keep it conversational."""
 }
 
 def get_conversation_context(messages: List[Dict], user_message: str) -> str:
     """Generate smart context based on conversation flow"""
-    if len(messages) <= 1:  # First real message
+    if len(messages) <= 1:
         return "This is the start of your conversation. Be welcoming and natural."
     
-    # Look at recent conversation
-    recent_messages = messages[-6:] if len(messages) > 6 else messages[1:]  # Skip system message
-    
-    # Identify conversation patterns
-    topics_mentioned = []
-    user_questions = []
-    
-    for msg in recent_messages:
-        if msg["role"] == "user":
-            content = msg["content"].lower()
-            # Simple topic detection
-            if "anime" in content or "one piece" in content:
-                topics_mentioned.append("anime")
-            if "food" in content or "eat" in content or "cheesecake" in content:
-                topics_mentioned.append("food")
-            if "work" in content or "job" in content or "ml" in content:
-                topics_mentioned.append("work")
-            if "?" in msg["content"]:
-                user_questions.append(msg["content"])
-    
-    # Build context
-    context_parts = []
-    
-    if topics_mentioned:
-        context_parts.append(f"You've been talking about: {', '.join(set(topics_mentioned))}")
-    
-    if user_questions and len(user_questions) > 1:
-        context_parts.append("They've asked you several questions - make sure you're actually answering what they're asking")
-    
-    # Check if user is asking something new vs continuing
     current_lower = user_message.lower()
-    if any(word in current_lower for word in ["what", "how", "why", "when", "where", "can you", "do you"]):
-        context_parts.append("They're asking you something specific - give them a direct, helpful answer first")
+    if any(word in current_lower for word in ["what", "how", "why", "when", "where", "can you", "do you", "tell me"]):
+        return "They're asking you something specific - give them a direct, helpful answer first, then continue the conversation naturally."
     
-    if context_parts:
-        return ". ".join(context_parts) + "."
-    else:
-        return "Continue the natural conversation flow."
+    if any(word in current_lower for word in ["hi", "hey", "hello", "sup", "what's up"]):
+        return "They're greeting you - respond naturally and ask how they're doing or what's up."
+    
+    return "Continue the natural conversation flow. Stay engaged with what they're talking about."
 
+# API Endpoints
 @app.get("/")
 async def root():
-    return {"status": "alive", "active_chats": len(chat_storage)}
+    return {
+        "status": "alive", 
+        "active_chats": len(chat_storage),
+        "rag_documents": len(rag_documents),
+        "rag_chunks": len(rag_chunks)
+    }
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
@@ -257,36 +495,48 @@ async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
         }
         conversation.messages.append(user_message)
         
-        # Smart context management
+        # Get RAG context
+        rag_context = get_context_for_query(request.message)
+        context_used = bool(rag_context)
+        
+        # Build API messages
         api_messages = []
         api_messages.append({"role": "system", "content": SYSTEM_MESSAGE["content"]})
         
-        # Add dynamic context
-        context = get_conversation_context(conversation.messages, request.message)
-        if context:
-            api_messages.append({"role": "system", "content": f"Context: {context}"})
+        # Add RAG context if available
+        if rag_context:
+            context_message = {
+                "role": "system", 
+                "content": f"Relevant information that might help answer their question: {rag_context}"
+            }
+            api_messages.append(context_message)
+            logger.info(f"Using RAG context for query: {request.message[:50]}...")
         
-        # Include relevant conversation history (last 10 exchanges max)
+        # Add conversation flow context
+        flow_context = get_conversation_context(conversation.messages, request.message)
+        if flow_context:
+            api_messages.append({"role": "system", "content": f"Context: {flow_context}"})
+        
+        # Include recent conversation history
         user_assistant_messages = [
             msg for msg in conversation.messages 
             if msg["role"] in ["user", "assistant"]
         ]
         
-        # Smart message selection - prioritize recent + relevant
-        recent_messages = user_assistant_messages[-10:] if len(user_assistant_messages) > 10 else user_assistant_messages
+        recent_messages = user_assistant_messages[-8:] if len(user_assistant_messages) > 8 else user_assistant_messages
         
         for msg in recent_messages:
             api_messages.append({"role": msg["role"], "content": msg["content"]})
         
-        # Call Groq with optimized settings for human-like responses
+        # Call Groq
         max_retries = 2
         for attempt in range(max_retries):
             try:
                 completion = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=api_messages,
-                    temperature=0.8,  # Natural variation
-                    max_completion_tokens=200,  # Keep responses concise
+                    temperature=0.8,
+                    max_completion_tokens=180,
                     top_p=0.9,
                     stream=False,
                 )
@@ -302,12 +552,11 @@ async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
         
         response_content = completion.choices[0].message.content.strip()
         
-        # Clean up response if needed
-        if len(response_content) > 400:  # If response is too long, it probably went off-track
-            # Try to get a more focused response
+        # Clean up overly long responses
+        if len(response_content) > 350:
             focused_prompt = {
                 "role": "user",
-                "content": f"That was a bit long. Can you give me a more direct, conversational response to: {request.message}"
+                "content": f"Keep it shorter and more conversational. What I asked was: {request.message}"
             }
             
             try:
@@ -315,15 +564,14 @@ async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
                     model="llama-3.3-70b-versatile",
                     messages=api_messages + [focused_prompt],
                     temperature=0.7,
-                    max_completion_tokens=150,
+                    max_completion_tokens=120,
                     top_p=0.9,
                 )
                 response_content = focused_completion.choices[0].message.content.strip()
             except:
-                # If retry fails, just truncate smartly
                 sentences = response_content.split('. ')
-                if len(sentences) > 3:
-                    response_content = '. '.join(sentences[:3]) + '.'
+                if len(sentences) > 2:
+                    response_content = '. '.join(sentences[:2]) + '.'
         
         # Add assistant response
         assistant_message = {
@@ -340,7 +588,8 @@ async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
         return ChatResponse(
             response=response_content,
             conversation_id=conversation_id,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
+            context_used=context_used
         )
         
     except HTTPException:
@@ -352,22 +601,40 @@ async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
             detail="Something went wrong on my end!"
         )
 
-@app.get("/conversation-starters")
-async def get_conversation_starters():
-    """Get natural conversation starters"""
-    import random
-    starters = [
-        "Hey! What's up?",
-        "How's your day going?",
-        "What's on your mind?",
-        "Hey there! How are things?",
-        "What brings you here today?",
-        "Sup! What are you up to?",
-    ]
-    
+@app.get("/rag-status")
+async def rag_status():
+    """Check RAG system status"""
     return {
-        "starters": random.sample(starters, 3),
-        "tip": "Just say hi and ask whatever's on your mind!"
+        "status": "active" if sentence_encoder and document_converter else "inactive",
+        "documents": len(rag_documents),
+        "chunks": len(rag_chunks),
+        "model": Config.SENTENCE_TRANSFORMER_MODEL,
+        "pdf_directory": Config.PDF_DIRECTORY
+    }
+
+@app.post("/add-pdf")
+async def add_pdf(pdf_path: str):
+    """Add a new PDF to the RAG system"""
+    try:
+        if not Path(pdf_path).exists():
+            raise HTTPException(status_code=404, detail="PDF file not found")
+        
+        add_document_to_rag(pdf_path)
+        save_rag_cache()
+        
+        return {"message": f"Successfully added {pdf_path}"}
+    except Exception as e:
+        logger.error(f"Error adding PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Error adding PDF: {e}")
+
+@app.get("/search")
+async def search_context(query: str, top_k: int = 3):
+    """Search for relevant context (for debugging)"""
+    results = search_rag(query, top_k=top_k)
+    return {
+        "query": query,
+        "results": results,
+        "formatted_context": get_context_for_query(query)
     }
 
 @app.get("/conversations/{conversation_id}/history")
@@ -382,7 +649,7 @@ async def get_conversation_history(conversation_id: str):
     return {
         "conversation_id": conversation_id,
         "message_count": conversation.message_count,
-        "messages": messages[-20:]  # Last 20 messages
+        "messages": messages[-20:]
     }
 
 @app.delete("/conversations/{conversation_id}")
@@ -396,11 +663,16 @@ async def delete_conversation(conversation_id: str):
 
 @app.get("/health")
 async def health_check():
-    """Simple health check"""
+    """Health check"""
     return {
         "status": "healthy",
         "active_conversations": len(chat_storage),
-        "groq_available": client is not None
+        "groq_available": client is not None,
+        "rag_system": {
+            "documents": len(rag_documents),
+            "chunks": len(rag_chunks),
+            "encoder_loaded": sentence_encoder is not None
+        }
     }
 
 if __name__ == "__main__":
