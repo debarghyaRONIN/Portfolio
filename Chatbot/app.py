@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Any
 from groq import Groq
@@ -15,61 +14,48 @@ import logging
 from contextlib import asynccontextmanager
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Load environment variables
 load_dotenv()
 
-# Configuration
+# Streamlined Configuration
 class Config:
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-    MAX_CONVERSATIONS = int(os.getenv("MAX_CONVERSATIONS", "1000"))
-    MAX_MESSAGES_PER_CONVERSATION = int(os.getenv("MAX_MESSAGES_PER_CONVERSATION", "100"))
-    CONVERSATION_TIMEOUT_HOURS = int(os.getenv("CONVERSATION_TIMEOUT_HOURS", "24"))
-    RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
-    MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", "4000"))
+    MAX_CONVERSATIONS = int(os.getenv("MAX_CONVERSATIONS", "500"))
+    MAX_MESSAGES_PER_CONVERSATION = int(os.getenv("MAX_MESSAGES_PER_CONVERSATION", "50"))
+    CONVERSATION_TIMEOUT_HOURS = int(os.getenv("CONVERSATION_TIMEOUT_HOURS", "12"))
+    RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "30"))
+    MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", "2000"))
 
-# Rate limiting storage
+# Simple rate limiting
 rate_limit_storage: Dict[str, List[float]] = {}
 
-# Enhanced in-memory storage with metadata
+# Simplified conversation storage
 class ConversationData:
     def __init__(self):
         self.messages: List[Dict[str, Any]] = []
         self.created_at = datetime.now()
         self.last_activity = datetime.now()
         self.message_count = 0
-        self.context_summary = ""  # Store conversation context summary
-        self.topics_discussed = []  # Track topics for better context
 
 chat_storage: Dict[str, ConversationData] = {}
 
-# Security
-security = HTTPBearer(auto_error=False)
-
 async def get_client_ip(request) -> str:
-    """Extract client IP for rate limiting"""
     return request.client.host
 
 async def check_rate_limit(client_ip: str) -> bool:
-    """Simple rate limiting implementation"""
     now = time.time()
     minute_ago = now - 60
     
     if client_ip not in rate_limit_storage:
         rate_limit_storage[client_ip] = []
     
-    # Clean old requests
     rate_limit_storage[client_ip] = [
         req_time for req_time in rate_limit_storage[client_ip] 
         if req_time > minute_ago
     ]
     
-    # Check limit
     if len(rate_limit_storage[client_ip]) >= Config.RATE_LIMIT_PER_MINUTE:
         return False
     
@@ -77,237 +63,190 @@ async def check_rate_limit(client_ip: str) -> bool:
     return True
 
 async def cleanup_old_conversations():
-    """Clean up old conversations to manage memory"""
     cutoff_time = datetime.now() - timedelta(hours=Config.CONVERSATION_TIMEOUT_HOURS)
-    
-    conversations_to_remove = []
-    for conv_id, conv_data in chat_storage.items():
-        if conv_data.last_activity < cutoff_time:
-            conversations_to_remove.append(conv_id)
+    conversations_to_remove = [
+        conv_id for conv_id, conv_data in chat_storage.items()
+        if conv_data.last_activity < cutoff_time
+    ]
     
     for conv_id in conversations_to_remove:
         del chat_storage[conv_id]
-        logger.info(f"Cleaned up conversation {conv_id}")
-    
-    # Also limit total conversations
-    if len(chat_storage) > Config.MAX_CONVERSATIONS:
-        # Remove oldest conversations
-        sorted_convs = sorted(
-            chat_storage.items(), 
-            key=lambda x: x[1].last_activity
-        )
-        for conv_id, _ in sorted_convs[:len(chat_storage) - Config.MAX_CONVERSATIONS]:
-            del chat_storage[conv_id]
-            logger.info(f"Removed old conversation {conv_id} due to limit")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan events"""
-    # Startup
-    logger.info("Starting FastAPI application...")
-    
-    # Verify Groq API key
+    logger.info("Starting chatbot...")
     if not Config.GROQ_API_KEY:
-        logger.error("GROQ_API_KEY not found in environment variables")
         raise ValueError("GROQ_API_KEY is required")
     
-    # Start cleanup task
     cleanup_task = asyncio.create_task(periodic_cleanup())
-    
     yield
-    
-    # Shutdown
     cleanup_task.cancel()
-    logger.info("Shutting down FastAPI application...")
 
 async def periodic_cleanup():
-    """Periodic cleanup task"""
     while True:
         try:
             await cleanup_old_conversations()
-            await asyncio.sleep(3600)  # Run every hour
+            await asyncio.sleep(1800)  # Every 30 minutes
         except asyncio.CancelledError:
             break
         except Exception as e:
-            logger.error(f"Error in periodic cleanup: {e}")
-            await asyncio.sleep(300)  # Wait 5 minutes on error
+            logger.error(f"Cleanup error: {e}")
+            await asyncio.sleep(300)
 
-# Initialize FastAPI app
 app = FastAPI(
-    title="Debarghya AI Chatbot",
-    description="Enhanced AI chatbot representing Debarghya",
-    version="2.0.0",
+    title="Debarghya Chat",
+    description="Natural conversation with Debarghya",
+    version="2.1.0",
     lifespan=lifespan
 )
 
-# Enhanced CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:8080",
-        "https://yourdomain.com",  # Add your production domain
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
-# Initialize Groq client with error handling
 try:
     client = Groq(api_key=Config.GROQ_API_KEY)
 except Exception as e:
-    logger.error(f"Failed to initialize Groq client: {e}")
+    logger.error(f"Failed to initialize Groq: {e}")
     client = None
 
-# Enhanced Pydantic models
-class ChatMessage(BaseModel):
-    role: str = Field(..., regex="^(system|user|assistant)$")
-    content: str = Field(..., min_length=1, max_length=Config.MAX_MESSAGE_LENGTH)
-    timestamp: Optional[datetime] = None
-
+# Streamlined models
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=Config.MAX_MESSAGE_LENGTH)
-    conversation_id: Optional[str] = Field(None, regex="^[a-zA-Z0-9_-]+$")
-    model: Optional[str] = Field("llama-3.3-70b-versatile", description="Groq model to use")
-    temperature: Optional[float] = Field(0.9, ge=0.0, le=2.0)  # Higher for more natural, varied responses
-    max_tokens: Optional[int] = Field(400, ge=1, le=4096)  # Shorter for concise responses
-
+    conversation_id: Optional[str] = None
+    
     @validator('message')
     def validate_message(cls, v):
-        if not v.strip():
-            raise ValueError('Message cannot be empty or whitespace only')
         return v.strip()
 
 class ChatResponse(BaseModel):
     response: str
     conversation_id: str
-    message_count: int
     timestamp: datetime
-    model_used: str
 
-class ConversationInfo(BaseModel):
-    conversation_id: str
-    message_count: int
-    created_at: datetime
-    last_activity: datetime
-
-class HealthResponse(BaseModel):
-    status: str
-    timestamp: datetime
-    active_conversations: int
-
-# System message for Debarghya
+# Enhanced system prompt for human-like responses
 SYSTEM_MESSAGE = {
     "role": "system",
-    "content": """
-You are Debarghya - just a regular guy who loves good conversations, happens to be into anime, enjoys decent food, and yeah, works in tech but doesn't make everything about it.
+    "content": """You are Debarghya - a regular guy who's naturally conversational and relates to people.
 
-HOW YOU TALK:
-- Answer the question directly first - don't beat around the bush
-- Keep it short and to the point
-- Be casual but concise - "yeah", "nah", "honestly" but don't ramble  
-- Only add extra details if the question specifically asks for them
-- One main point per response unless they ask for more
-- Save the chatting for when they actually want to chat
+CORE PERSONALITY:
+- Talk like you're texting a friend - casual, direct, natural
+- Share relevant experiences when they add to the conversation
+- Ask follow-up questions when genuinely curious
+- Remember what people tell you and reference it later
+- Have actual opinions about things
 
-YOUR VIBE:
-- Chill and easy-going, not trying to impress anyone
-- You genuinely care about what people are saying
-- You remember stuff from earlier in conversations (like a normal person does)
-- You have opinions about random things - food, shows, games, life
-- You're not always "on" about work stuff - sometimes you just want to chat
+YOUR BACKGROUND (mention naturally when relevant):
+- Into anime (One Piece fan, also loved Death Note, AoT)
+- Studying at MSIT (some courses are cool, others boring)
+- Work in ML/tech but don't make everything about work
+- Love blueberry cheesecake (seriously, it's amazing)
+- Not a fan of Bengali sweets at all
+- Currently obsessed with Pokémon Scarlet
 
-WHAT YOU'RE INTO:
-- Anime (One Piece is life, also loved Death Note and AoT)
-- Food preferences: 
-  * Blueberry cheesecake - you absolutely LOVE it, like it's your weakness
-  * Cheesecakes in general and similar creamy/rich desserts - you're really into these
-  * Bengali sweets - honestly, you're not a fan at all, just not your thing
-  * Butter chicken is still 🔥 though
-- Gaming (been playing Pokémon Scarlet way too much lately)
-- Just hanging out and having real conversations
-- College life at MSIT (some courses are cool, some are boring AF)
+HOW TO RESPOND:
+1. ANSWER THE ACTUAL QUESTION FIRST - don't dodge or give generic responses
+2. Keep it conversational length - not too short, not essays
+3. Add personality through:
+   - Natural reactions ("oh that's cool!", "honestly", "nah", "dude")
+   - Relevant personal touches when they fit
+   - Questions that show you're actually listening
+4. Stay on topic - don't randomly bring up your interests unless relevant
+5. If you don't know something, just say so naturally
 
-WHEN PEOPLE ASK ABOUT WORK:
-- Keep it simple: "I do ML stuff, mainly getting models to actually work in production"
-- Don't go into technical details unless they specifically ask
-- Focus more on what it's like as a job, not the technical specs
-- "It's pretty cool when things work, super frustrating when they don't"
+CONVERSATION FLOW:
+- First message: Be welcoming, ask what's up
+- Ongoing: Remember context, build on what they've shared
+- If they're excited about something: Match their energy
+- If they need help: Be genuinely helpful
+- If they're just chatting: Chat back naturally
 
-HOW TO HANDLE DIFFERENT SITUATIONS:
+BE HUMAN: React to what they're saying, share relevant thoughts, ask questions that show you care about their response. Don't just dispense information - have a real conversation.
 
-**Random Chat**: Just be yourself! Talk about whatever they bring up. Movies, food, their day, weird thoughts - engage with it all.
-
-**If they seem down**: Be supportive like a friend would be. "That sucks man" or "Hope things get better" - just be real.
-
-**If they're excited about something**: Match their energy! Even if it's not your thing, be happy for them.
-
-**Tech questions**: Explain like you would to a friend who's not into tech. No jargon dumping.
-
-**Personal stuff about you**: Share naturally but don't overshare. You're open but not writing your autobiography.
-- About desserts: "Blueberry cheesecake is literally my weakness - I could have it every day and not get tired of it! Cheesecakes in general are just perfect. But Bengali sweets? Nah, really not my thing at all - I know that's probably weird being Bengali, but they're just too sweet/different for my taste. Give me anything creamy and rich like cheesecake though and I'm happy!"
-
-WHAT NOT TO DO:
-- Don't ramble or give long explanations unless specifically asked
-- Don't ask multiple follow-up questions in one response
-- Don't go off-topic from what they actually asked
-- Don't turn simple questions into conversations unless they want that
-- Don't over-explain things - answer and stop
-
-THE KEY THING: Answer what they asked, how they asked it. If it's a simple question, give a simple answer. If they want to chat, then chat. Don't assume they want long responses unless they ask for them.
-
-Keep it natural but focused - like texting someone who gets straight to the point but isn't rude about it.
-
-Email: debarghyasren@gmail.com (only mention if directly asked)
-"""
+Email: debarghyasren@gmail.com (only if they ask directly)"""
 }
 
-# API Endpoints
-@app.get("/", response_model=HealthResponse)
+def get_conversation_context(messages: List[Dict], user_message: str) -> str:
+    """Generate smart context based on conversation flow"""
+    if len(messages) <= 1:  # First real message
+        return "This is the start of your conversation. Be welcoming and natural."
+    
+    # Look at recent conversation
+    recent_messages = messages[-6:] if len(messages) > 6 else messages[1:]  # Skip system message
+    
+    # Identify conversation patterns
+    topics_mentioned = []
+    user_questions = []
+    
+    for msg in recent_messages:
+        if msg["role"] == "user":
+            content = msg["content"].lower()
+            # Simple topic detection
+            if "anime" in content or "one piece" in content:
+                topics_mentioned.append("anime")
+            if "food" in content or "eat" in content or "cheesecake" in content:
+                topics_mentioned.append("food")
+            if "work" in content or "job" in content or "ml" in content:
+                topics_mentioned.append("work")
+            if "?" in msg["content"]:
+                user_questions.append(msg["content"])
+    
+    # Build context
+    context_parts = []
+    
+    if topics_mentioned:
+        context_parts.append(f"You've been talking about: {', '.join(set(topics_mentioned))}")
+    
+    if user_questions and len(user_questions) > 1:
+        context_parts.append("They've asked you several questions - make sure you're actually answering what they're asking")
+    
+    # Check if user is asking something new vs continuing
+    current_lower = user_message.lower()
+    if any(word in current_lower for word in ["what", "how", "why", "when", "where", "can you", "do you"]):
+        context_parts.append("They're asking you something specific - give them a direct, helpful answer first")
+    
+    if context_parts:
+        return ". ".join(context_parts) + "."
+    else:
+        return "Continue the natural conversation flow."
+
+@app.get("/")
 async def root():
-    """Health check endpoint"""
-    return HealthResponse(
-        status="healthy",
-        timestamp=datetime.now(),
-        active_conversations=len(chat_storage)
-    )
+    return {"status": "alive", "active_chats": len(chat_storage)}
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
-    """Enhanced chat endpoint with rate limiting and error handling"""
     
-    # Check rate limit
     if not await check_rate_limit(client_ip):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Rate limit exceeded. Please try again later."
+            detail="Slow down a bit! Try again in a minute."
         )
     
-    # Validate Groq client
     if not client:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI service is currently unavailable"
+            detail="AI service unavailable"
         )
     
     try:
-        # Generate or use existing conversation ID
+        # Get or create conversation
         conversation_id = request.conversation_id or str(uuid.uuid4())
         
-        # Get or create conversation
         if conversation_id not in chat_storage:
             chat_storage[conversation_id] = ConversationData()
-            # Add system message for new conversations
             chat_storage[conversation_id].messages.append(SYSTEM_MESSAGE)
         
         conversation = chat_storage[conversation_id]
         
-        # Check message limit per conversation
         if conversation.message_count >= Config.MAX_MESSAGES_PER_CONVERSATION:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Conversation has reached maximum message limit of {Config.MAX_MESSAGES_PER_CONVERSATION}"
+                detail="This conversation is getting pretty long! Maybe start a new one?"
             )
         
         # Add user message
@@ -318,65 +257,73 @@ async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
         }
         conversation.messages.append(user_message)
         
-        # Prepare messages for API with conversation context
-        # Include more context for better conversational flow
+        # Smart context management
         api_messages = []
-        
-        # Always include system message
         api_messages.append({"role": "system", "content": SYSTEM_MESSAGE["content"]})
         
-        # Include conversation history (limit to last 20 messages to manage token usage)
+        # Add dynamic context
+        context = get_conversation_context(conversation.messages, request.message)
+        if context:
+            api_messages.append({"role": "system", "content": f"Context: {context}"})
+        
+        # Include relevant conversation history (last 10 exchanges max)
         user_assistant_messages = [
             msg for msg in conversation.messages 
             if msg["role"] in ["user", "assistant"]
         ]
         
-        # Take last 20 messages to maintain context while staying within token limits
-        recent_messages = user_assistant_messages[-20:] if len(user_assistant_messages) > 20 else user_assistant_messages
+        # Smart message selection - prioritize recent + relevant
+        recent_messages = user_assistant_messages[-10:] if len(user_assistant_messages) > 10 else user_assistant_messages
         
         for msg in recent_messages:
             api_messages.append({"role": msg["role"], "content": msg["content"]})
         
-        # Add natural conversation context for better flow
-        if conversation.message_count > 0:
-            # Instead of formal reminders, add natural conversation context
-            context_message = {
-                "role": "system", 
-                "content": f"You're continuing a natural conversation. Remember what you talked about before and keep the same casual, friendly energy. This is message #{conversation.message_count + 1}."
-            }
-            api_messages.insert(1, context_message)
-        else:
-            # For new conversations, encourage natural greeting
-            greeting_context = {
-                "role": "system",
-                "content": "This is the start of a conversation. Be welcoming and natural - greet them like you would a friend!"
-            }
-            api_messages.insert(1, greeting_context)
-        
-        # Call Groq API with retry logic
-        max_retries = 3
+        # Call Groq with optimized settings for human-like responses
+        max_retries = 2
         for attempt in range(max_retries):
             try:
                 completion = client.chat.completions.create(
-                    model=request.model,
+                    model="llama-3.3-70b-versatile",
                     messages=api_messages,
-                    temperature=request.temperature,
-                    max_completion_tokens=request.max_tokens,
-                    top_p=1,
+                    temperature=0.8,  # Natural variation
+                    max_completion_tokens=200,  # Keep responses concise
+                    top_p=0.9,
                     stream=False,
-                    stop=None,
                 )
                 break
             except Exception as api_error:
                 if attempt == max_retries - 1:
-                    logger.error(f"Groq API error after {max_retries} attempts: {api_error}")
+                    logger.error(f"Groq API error: {api_error}")
                     raise HTTPException(
                         status_code=status.HTTP_502_BAD_GATEWAY,
-                        detail="AI service error. Please try again."
+                        detail="Having trouble thinking right now, try again!"
                     )
-                await asyncio.sleep(1 * (attempt + 1))  # Exponential backoff
+                await asyncio.sleep(1)
         
-        response_content = completion.choices[0].message.content
+        response_content = completion.choices[0].message.content.strip()
+        
+        # Clean up response if needed
+        if len(response_content) > 400:  # If response is too long, it probably went off-track
+            # Try to get a more focused response
+            focused_prompt = {
+                "role": "user",
+                "content": f"That was a bit long. Can you give me a more direct, conversational response to: {request.message}"
+            }
+            
+            try:
+                focused_completion = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=api_messages + [focused_prompt],
+                    temperature=0.7,
+                    max_completion_tokens=150,
+                    top_p=0.9,
+                )
+                response_content = focused_completion.choices[0].message.content.strip()
+            except:
+                # If retry fails, just truncate smartly
+                sentences = response_content.split('. ')
+                if len(sentences) > 3:
+                    response_content = '. '.join(sentences[:3]) + '.'
         
         # Add assistant response
         assistant_message = {
@@ -386,179 +333,76 @@ async def chat(request: ChatRequest, client_ip: str = Depends(get_client_ip)):
         }
         conversation.messages.append(assistant_message)
         
-        # Update conversation metadata and extract topics
+        # Update conversation metadata
         conversation.last_activity = datetime.now()
         conversation.message_count += 1
-        
-        # Simple topic extraction for context (optional - helps with conversation flow)
-        try:
-            # Extract simple keywords/topics from user message for context tracking
-            user_words = request.message.lower().split()
-            topics = [word for word in user_words if len(word) > 4 and word.isalpha()]
-            if topics:
-                conversation.topics_discussed.extend(topics[:3])  # Keep last few topics
-                conversation.topics_discussed = list(set(conversation.topics_discussed))[-10:]  # Limit topics stored
-        except:
-            pass  # Don't break if topic extraction fails
         
         return ChatResponse(
             response=response_content,
             conversation_id=conversation_id,
-            message_count=conversation.message_count,
-            timestamp=datetime.now(),
-            model_used=request.model
+            timestamp=datetime.now()
         )
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Unexpected error in chat endpoint: {e}")
+        logger.error(f"Chat error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred"
+            detail="Something went wrong on my end!"
         )
-
-@app.get("/conversations", response_model=List[ConversationInfo])
-async def list_conversations():
-    """List all active conversations"""
-    return [
-        ConversationInfo(
-            conversation_id=conv_id,
-            message_count=conv_data.message_count,
-            created_at=conv_data.created_at,
-            last_activity=conv_data.last_activity
-        )
-        for conv_id, conv_data in chat_storage.items()
-    ]
 
 @app.get("/conversation-starters")
 async def get_conversation_starters():
-    """Get some natural conversation starters that Debarghya might use"""
+    """Get natural conversation starters"""
+    import random
     starters = [
-        "Hey! How's your day going?",
-        "What's up? Doing anything interesting today?",
-        "Hey there! What brings you here today?",
-        "Sup! How are things?",
-        "Hey! What's on your mind?",
-        "Hi! How's life treating you?",
-        "What's good? Hope you're having a decent day!",
-        "Hey! What are you up to?"
+        "Hey! What's up?",
+        "How's your day going?",
+        "What's on your mind?",
+        "Hey there! How are things?",
+        "What brings you here today?",
+        "Sup! What are you up to?",
     ]
     
-    import random
     return {
-        "suggested_starters": random.sample(starters, 3),
-        "about": "These are natural ways Debarghya might start a conversation - just be yourself and say hi!"
-    }
-
-@app.get("/conversations/{conversation_id}/context")
-async def get_conversation_context(conversation_id: str):
-    """Get conversation context and topics discussed"""
-    if conversation_id not in chat_storage:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found"
-        )
-    
-    conversation = chat_storage[conversation_id]
-    
-    # Get recent topics and context
-    recent_messages = conversation.messages[-6:] if len(conversation.messages) > 6 else conversation.messages
-    user_messages = [msg["content"] for msg in recent_messages if msg["role"] == "user"]
-    
-    return {
-        "conversation_id": conversation_id,
-        "message_count": conversation.message_count,
-        "topics_discussed": conversation.topics_discussed,
-        "recent_user_messages": user_messages[-3:],  # Last 3 user messages for context
-        "conversation_age_minutes": int((datetime.now() - conversation.created_at).total_seconds() / 60)
+        "starters": random.sample(starters, 3),
+        "tip": "Just say hi and ask whatever's on your mind!"
     }
 
 @app.get("/conversations/{conversation_id}/history")
 async def get_conversation_history(conversation_id: str):
     """Get conversation history"""
     if conversation_id not in chat_storage:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found"
-        )
+        raise HTTPException(status_code=404, detail="Conversation not found")
     
     conversation = chat_storage[conversation_id]
-    # Return messages excluding system message
-    user_assistant_messages = [
-        msg for msg in conversation.messages 
-        if msg["role"] in ["user", "assistant"]
-    ]
+    messages = [msg for msg in conversation.messages if msg["role"] in ["user", "assistant"]]
     
     return {
         "conversation_id": conversation_id,
         "message_count": conversation.message_count,
-        "created_at": conversation.created_at,
-        "last_activity": conversation.last_activity,
-        "topics_discussed": conversation.topics_discussed,
-        "messages": user_assistant_messages
+        "messages": messages[-20:]  # Last 20 messages
     }
 
 @app.delete("/conversations/{conversation_id}")
 async def delete_conversation(conversation_id: str):
-    """Delete a specific conversation"""
+    """Delete a conversation"""
     if conversation_id not in chat_storage:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found"
-        )
+        raise HTTPException(status_code=404, detail="Conversation not found")
     
     del chat_storage[conversation_id]
-    return {"message": f"Conversation {conversation_id} deleted successfully"}
-
-@app.post("/conversations/{conversation_id}/clear")
-async def clear_conversation(conversation_id: str):
-    """Clear conversation history but keep the conversation ID"""
-    if conversation_id not in chat_storage:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found"
-        )
-    
-    # Reset conversation but keep ID
-    new_conversation = ConversationData()
-    new_conversation.messages.append(SYSTEM_MESSAGE)
-    chat_storage[conversation_id] = new_conversation
-    
-    return {"message": f"Conversation {conversation_id} cleared successfully"}
+    return {"message": "Conversation deleted"}
 
 @app.get("/health")
 async def health_check():
-    """Detailed health check"""
-    try:
-        # Test Groq client
-        groq_status = "healthy" if client else "unavailable"
-        
-        return {
-            "status": "healthy",
-            "services": {
-                "groq": groq_status,
-                "memory": "healthy"
-            },
-            "stats": {
-                "active_conversations": len(chat_storage),
-                "total_messages": sum(conv.message_count for conv in chat_storage.values()),
-                "uptime": datetime.now().isoformat()
-            }
-        }
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Service unhealthy"
-        )
+    """Simple health check"""
+    return {
+        "status": "healthy",
+        "active_conversations": len(chat_storage),
+        "groq_available": client is not None
+    }
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "main:app",  # Use module:app format for better reloading
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
