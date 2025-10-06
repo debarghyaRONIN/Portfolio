@@ -72,7 +72,7 @@ const Footer = () => {
             <div className={`flex items-center gap-3 ${linkClass} transition-colors duration-500`}>
               <DocumentTextIcon className={`w-5 h-5 ${iconClass} transition-colors duration-500`} />
               <a 
-                href="/Debarghya_Saha_newresume.pdf" 
+                href="/Debarghya_Saha_AIML.pdf" 
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`${linkClass} transition-colors duration-500 flex items-center`}
