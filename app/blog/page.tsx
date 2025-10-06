@@ -118,7 +118,7 @@ const BlogPage = () => {
           {/* SEO Header */}
           <div className="text-center mb-16 space-y-6">
             <h1 className={`text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${headingGradient} mb-4 transition-colors duration-500`}>
-              Machine Learning Blog
+              Machine Learning Blog(Under Development)
             </h1>
             <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-800'} text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed transition-colors duration-500`}>
               Deep dives into Machine Learning, MLOps best practices, and the intersection of AI with software engineering.
