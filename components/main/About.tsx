@@ -120,7 +120,7 @@ const About = () => {
                 Blog
               </a>
               <a
-                href="/Debarghya_Saha_newresume.pdf"
+                href="/Debarghya_Saha_AIML.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`px-6 py-3 bg-gradient-to-r ${accentButtonGradient} text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105`}
