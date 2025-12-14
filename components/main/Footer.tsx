@@ -69,20 +69,6 @@ const Footer = () => {
                 +91 9147031684
               </a>
             </div>
-            <div className={`flex items-center gap-3 ${linkClass} transition-colors duration-500`}>
-              <DocumentTextIcon className={`w-5 h-5 ${iconClass} transition-colors duration-500`} />
-              <a 
-                href="/Debarghya_Saha_AIML.pdf" 
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${linkClass} transition-colors duration-500 flex items-center`}
-              >
-                <span>Resume</span>
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </a>
-            </div>
           </div>
           
           {/* Connect Section */}

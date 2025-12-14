@@ -114,17 +114,7 @@ const About = () => {
                 View Projects
               </a>
               <a
-<<<<<<< HEAD
-                href="/blog"
-                className={`px-6 py-3 bg-gradient-to-r ${accentButtonGradient} text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105`}
-              >
-                Blog
-              </a>
-              <a
-                href="/Debarghya_Saha_AIML.pdf"
-=======
-                href="/Debarghya_Saha_newresume.pdf"
->>>>>>> 2ab8287 (Refactor Projects component, remove unused BlogPostSkeleton and blogPosts, and delete obsolete video files)
+                href="/Debarghya_Saha2025.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`px-6 py-3 bg-gradient-to-r ${accentButtonGradient} text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105`}

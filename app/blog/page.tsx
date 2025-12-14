@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import BlogNavbar from '@/components/main/BlogNavbar';
+import Navbar from '@/components/main/Navbar';
 
 interface BlogPost {
   title: string;
@@ -111,7 +111,7 @@ const BlogPage = () => {
 
   return (
     <>
-      <BlogNavbar />
+      <Navbar />
       <div className={`min-h-screen pt-20 ${bgClasses} transition-colors duration-500`}>
         {/* Responsive container - adapts to screen size */}
         <div className="w-full px-4 sm:px-6 lg:px-8 py-16 mx-auto max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-7xl transition-all duration-300">
