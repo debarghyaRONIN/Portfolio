@@ -351,7 +351,7 @@ const Projects = () => {
       description: "A comprehensive stock market analysis tool that provides real-time data visualization and predictive analytics.",
       image: "/Stock.PNG",
       technologies: ["Python", "Streamlit", "Prophet", "Yahoo Finance"],
-      link: "https://pdftojso-vnksozoesenyxp8oqj9di5.streamlit.app/"
+      link: "https://stockpriceaap.streamlit.app/"
     },
     {
       title: "Reinforcement Learning to train AI to play Pokémon Red",

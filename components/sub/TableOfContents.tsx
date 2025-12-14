@@ -1,4 +1,3 @@
-import { scrollToSection } from '@/utils/blogUtils';
 import { useActiveSection } from '@/utils/hooks/useActiveSection';
 
 interface TableOfContentsItem {

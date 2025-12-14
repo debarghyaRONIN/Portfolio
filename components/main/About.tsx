@@ -93,7 +93,7 @@ const About = () => {
             </h2>
             <div className={`space-y-4 ${textClasses} transition-colors duration-500`}>
               <p className="text-lg leading-relaxed">
-              A Data Science and MLOps Engineer with a strong background in AI model development, data engineering, and machine learning frameworks. My expertise lies in building intelligent systems, optimizing workflows, and deploying scalable AI-driven applications. Additionally, I have a solid understanding of computer networks, backend development, and software architecture.
+              A Data Scientist with a strong background in AI model development, data engineering, and machine learning frameworks. My expertise lies in building intelligent systems, optimizing workflows, and deploying scalable AI-driven applications. Additionally, I have a solid understanding of computer networks, backend development, and software architecture.
               </p>
               <p className="text-lg leading-relaxed">
               Beyond my technical work, I occasionally create 3D art. I was a freelance 3D artist until my second year of college, blending creativity with technology in my projects.
@@ -114,6 +114,7 @@ const About = () => {
                 View Projects
               </a>
               <a
+<<<<<<< HEAD
                 href="/blog"
                 className={`px-6 py-3 bg-gradient-to-r ${accentButtonGradient} text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105`}
               >
@@ -121,6 +122,9 @@ const About = () => {
               </a>
               <a
                 href="/Debarghya_Saha_AIML.pdf"
+=======
+                href="/Debarghya_Saha_newresume.pdf"
+>>>>>>> 2ab8287 (Refactor Projects component, remove unused BlogPostSkeleton and blogPosts, and delete obsolete video files)
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`px-6 py-3 bg-gradient-to-r ${accentButtonGradient} text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105`}

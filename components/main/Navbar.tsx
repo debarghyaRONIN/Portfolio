@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { slideInFromTop } from "@/utils/motion";
 import { Bars3Icon, XMarkIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
@@ -361,6 +362,19 @@ const Navbar = () => {
                   </svg>
                 </a>
                 <a
+                  href="https://hashnode.com/@DebarghyaS"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'} p-1 rounded-full hover:bg-gray-800/30`}
+                >
+                  <Image
+                    src="/blog.png"
+                    alt="Hashnode Blog"
+                    width={20}
+                    height={20}
+                  />
+                </a>
+                <a
                   href={mailtoLink}
                   className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}`}
                 >
@@ -462,6 +476,19 @@ const Navbar = () => {
                     clipRule="evenodd"
                   />
                 </svg>
+              </a>
+              <a
+                href="https://hashnode.com/@DebarghyaS"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}`}
+              >
+                <Image
+                  src="/blog.png"
+                  alt="Hashnode Blog"
+                  width={20}
+                  height={20}
+                />
               </a>
               <a
                 href={mailtoLink}
